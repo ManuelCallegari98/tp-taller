@@ -1,9 +1,8 @@
 'use client'
-
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // Asegúrate de importar desde 'next/navigation'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,7 @@ import {
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter(); // Importar useRouter desde 'next/navigation'
+  const router = useRouter();
 
   const handleLogin = async () => {
     try {
@@ -35,8 +34,12 @@ export default function Login() {
         const data = await response.json();
         console.log("Response:", data);
 
-        // Redirigir a /browse con login en true y la respuesta del login
-        router.push(`/browse?login=true&response=${encodeURIComponent(JSON.stringify(data))}`);
+        // Guardar el estado de login y el objeto del usuario en localStorage
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('user', JSON.stringify(data));
+
+        // Redirigir a /browse
+        router.push('/browse');
       } else {
         console.error("Login failed with status:", response.status);
       }

@@ -32,7 +32,7 @@ export const loginUser = async (req, res) => {
         }
 
         console.log(`User logged in: ${user.id}`);
-        res.status(200).json({ message: 'Login successful', user });
+        res.status(200).json({ user });
     } catch (err) {
         console.log(`Error logging in: ${err.message}`);
         res.status(500).json({ error: err.message });
