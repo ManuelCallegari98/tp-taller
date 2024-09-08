@@ -34,9 +34,9 @@ export default function Login() {
         const data = await response.json();
         console.log("Response:", data);
 
-        // Guardar el estado de login y el objeto del usuario en localStorage
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('user', JSON.stringify(data));
+        // Guardar el estado de login y el objeto del usuario en SessionStorage
+        sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('user', JSON.stringify(data));
 
         // Redirigir a /browse
         router.push('/browse');
