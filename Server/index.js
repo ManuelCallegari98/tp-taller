@@ -15,6 +15,7 @@ app.use(express.json());
 // Usar las rutas de usuario
 app.use('/api', userRoutes);
 
+
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
