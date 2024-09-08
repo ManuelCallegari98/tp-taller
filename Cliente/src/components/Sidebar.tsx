@@ -1,21 +1,22 @@
-// components/ui/Sidebar.jsx
 'use client'
 import Link from 'next/link';
-import { Home, Film, Heart, Users, Popcorn, Settings, Eye, Tv } from 'lucide-react';
+import { Home, Film, Heart, Eye, Tv, Settings, Popcorn } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { Separator } from './ui/separator';
 
-export default function Sidebar() {
-  const pathname = usePathname()
+export default function Sidebar({ isAdmin }: { isAdmin: boolean }) {
+  const pathname = usePathname();
+
   return (
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link
             href="/browse"
-            className={`flex items-center gap-2 font-semibold ${pathname === '/browse' ? 'text-foreground' : 'text-muted-foreground' }`}
+            className={`flex items-center gap-2 font-semibold ${pathname === '/browse' ? 'text-foreground' : 'text-muted-foreground'}`}
           >
             <Popcorn className="h-4 w-4" />
-            <span className="">TangoFlix</span>
+            <span>TangoFlix</span>
           </Link>
         </div>
         <div className="flex-1">
@@ -62,18 +63,22 @@ export default function Sidebar() {
                 ${pathname === '/browse/profile' 
                   ? 'text-foreground' 
                   : 'text-muted-foreground hover:text-foreground'}`} >
-              <Settings  className="h-5 w-5" />
+              <Settings className="h-5 w-5" />
               Settings
             </Link>
-            <Link
-              href="/browse/dashboard"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${pathname === '/browse/dashboard' 
-                  ? 'text-foreground' 
-                  : 'text-muted-foreground hover:text-foreground'}`} >
-              <Home className="h-5 w-5" />
-              Dashboard
-            </Link>
+            <Separator className='my-4'/>
+            {/* Mostrar el Dashboard solo si el usuario es administrador */}
+            {isAdmin && (
+              <Link
+                href="/browse/dashboard"
+                className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
+                  ${pathname === '/browse/dashboard' 
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground hover:text-foreground'}`} >
+                <Home className="h-5 w-5" />
+                Dashboard
+              </Link>
+            )}
           </nav>
         </div>
       </div>
