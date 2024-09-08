@@ -1,5 +1,9 @@
+'use client'
+
 import Image from "next/image";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Asegúrate de importar desde 'next/navigation'
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,17 +17,45 @@ import {
 } from "@/components/ui/card";
 
 export default function Login() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter(); // Importar useRouter desde 'next/navigation'
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://localhost:4000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.status === 200) {
+        const data = await response.json();
+        console.log("Response:", data);
+
+        // Redirigir a /browse con login en true y la respuesta del login
+        router.push(`/browse?login=true&response=${encodeURIComponent(JSON.stringify(data))}`);
+      } else {
+        console.error("Login failed with status:", response.status);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <Card className="mx-auto max-w-sm">
         <CardHeader className="flex flex-col items-center gap-2">
           <Image
-          src="/1.png"
-          alt="Image"
-          width="300"
-          height="300"
-          className="h-32 w-42 object-cover rounded-md "
-        />
+            src="/1.png"
+            alt="Image"
+            width="300"
+            height="300"
+            className="h-32 w-42 object-cover rounded-md"
+          />
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
             Enter your username and password below to login to your account
@@ -35,18 +67,26 @@ export default function Login() {
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                type="username"
+                type="text"
                 placeholder="User123"
                 required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
                 <Label htmlFor="password">Password</Label>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="button" className="w-full" onClick={handleLogin}>
               Login
             </Button>
           </div>
@@ -61,3 +101,4 @@ export default function Login() {
     </div>
   );
 }
+

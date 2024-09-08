@@ -1,9 +1,13 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";  // Importar cors
 import { db } from './database/connection.database.js';
 import userRoutes from './routes/user.routes.js';  // Importar las rutas
 
 const app = express();
+
+// Middleware para CORS
+app.use(cors());  // Permitir CORS para todas las solicitudes
 
 // Middleware para parsear JSON
 app.use(express.json());
