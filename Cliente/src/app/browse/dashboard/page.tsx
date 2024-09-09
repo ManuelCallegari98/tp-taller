@@ -1,11 +1,10 @@
-'use client'
+"use client";
 import React, { useEffect, useState } from "react";
 import UserCard from "@/components/UsersCard";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export default function Dashboard() {
   const [users, setUsers] = useState([]);
@@ -34,7 +33,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (searchTerm) {
       // Filtrar usuarios por término de búsqueda
-      const filtered = users.filter(user =>
+      const filtered = users.filter((user) =>
         user.username.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
@@ -59,13 +58,15 @@ export default function Dashboard() {
 
       <div className="flex-grow overflow-y-scroll w-full">
         <div className="grid grid-cols-1 m-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filteredUsers.map(user => (
+          {filteredUsers.map((user) => (
             <UserCard key={user.id} user={user} />
           ))}
         </div>
       </div>
       <div className="pt-6 text-center bottom-0 w-full">
-        <Button>Register New User</Button>
+        <Link href="/register">
+          <Button>Register New User</Button>
+        </Link>
       </div>
     </div>
   );

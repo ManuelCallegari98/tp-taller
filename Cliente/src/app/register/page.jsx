@@ -42,7 +42,7 @@ export default function Register() {
 
       if (response.ok) {
         // Redirige a la página de inicio de sesión
-        router.push("/login");
+        router.push("/browse/dashboard");
         setUsername("");
         setEmail("");
         setPassword("");
