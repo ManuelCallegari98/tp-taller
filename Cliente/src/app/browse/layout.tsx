@@ -49,7 +49,18 @@ export default function BrowseLayout({
   }, [router]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="bg-gray-200 animate-pulse h-screen md:w-[220px] lg:w-[280px]"></div>
+        <div className="flex flex-col w-full">
+          <div className="bg-gray-200 animate-pulse h-[60px]"></div>
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            <div className="bg-gray-200 animate-pulse h-[200px]"></div>
+            <div className="bg-gray-200 animate-pulse h-[200px] mt-4"></div>
+          </main>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated || !user) {
@@ -58,9 +69,9 @@ export default function BrowseLayout({
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <Sidebar isAdmin={user.isAdmin} />
+      <Sidebar  />
       <div className="flex flex-col">
-        <Header isAdmin={user.isAdmin}/>
+        <Header />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
           {children}
         </main>

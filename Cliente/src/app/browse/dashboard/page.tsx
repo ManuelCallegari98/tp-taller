@@ -11,6 +11,14 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
 
+  const activeUserString = sessionStorage.getItem('user');
+  
+  // Parsear el string JSON en un objeto
+  const activeUser = activeUserString ? JSON.parse(activeUserString) : null;
+  
+  // Determinar si el usuario activo es un administrador
+  const isAdmin = activeUser?.user.is_admin;
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -64,9 +72,11 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="pt-6 text-center bottom-0 w-full">
+        {isAdmin &&  
         <Link href="/register">
           <Button>Register New User</Button>
         </Link>
+        }
       </div>
     </div>
   );
