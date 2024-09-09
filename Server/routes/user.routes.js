@@ -4,7 +4,8 @@ import {
     loginUser,
     updateUserProfile,
     updateUserPassword,
-    deleteUser
+    deleteUser,
+    getAllUsers
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -23,6 +24,9 @@ router.put('/users/:id/:password', updateUserPassword);
 
 // Ruta para eliminar un usuario
 router.delete('/users/:id', deleteUser);
+
+// Ruta para obtener todos los usuarios
+router.get('/users', getAllUsers);
 
 export default router;
 

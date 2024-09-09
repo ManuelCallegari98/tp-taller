@@ -82,3 +82,13 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+export const getAllUsers = async (req, res) => {
+    try {
+      const users = await User.findAll(); // Asumiendo que tienes un método getAll en tu modelo
+      res.status(200).json(users);
+    } catch (err) {
+      console.error('Error retrieving users:', err);
+      res.status(500).json({ error: err.message });
+    }
+  };

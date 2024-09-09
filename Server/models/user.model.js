@@ -31,7 +31,15 @@ const User = {
             throw err;
         }
     },
-    
+    findAll: async () => {
+        try {
+          const query = 'SELECT * FROM users;';
+          const result = await db.query(query);
+          return result.rows;
+        } catch (err) {
+          throw err;
+        }
+      },
 
     // Método para encontrar un usuario por su nombre de usuario
     findByUsername: async (username) => {
