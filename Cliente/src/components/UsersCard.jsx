@@ -2,8 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import Image from 'next/image';
-import { Avatar } from '@radix-ui/react-avatar';
 import { DrawerDialogDemo } from '@/components/EditUser';
 
 export default function UserCard({ user }) {
@@ -18,15 +16,16 @@ export default function UserCard({ user }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4">
-        <Avatar className="w-24 h-24 rounded-full overflow-hidden">
-          <Image
+        {/* Div con tamaño fijo de 40px x 40px */}
+        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 mt-4">
+          {/* Imagen con tamaño fijo de 40px x 40px */}
+          <img
             src={user.profile_picture}
             alt="profile picture"
-            width={70}  // Mantén el tamaño de la imagen consistente
-            height={70}
-            className="object-cover w-24 h-24"  // Asegura que la imagen ocupe todo el espacio sin distorsionarse
+            className="w-full h-full object-cover"
           />
-        </Avatar>
+        </div>
+
         <div className="text-center">
           <div className="font-medium">{user.username}</div>
           <div className="text-sm text-muted-foreground">
