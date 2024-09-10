@@ -78,10 +78,10 @@ const User = {
     },
 
     // Método para encontrar un usuario por su correo electrónico
-    findByEmail: async (email) => {
+    findByName: async (name) => {
         try {
-            const query = `SELECT * FROM users WHERE email = $1;`;
-            const result = await db.query(query, [email]);
+            const query = `SELECT * FROM users WHERE name = $1;`;
+            const result = await db.query(query, [name]);
             return result.rows[0];
         } catch (err) {
             throw err;
@@ -97,15 +97,15 @@ const User = {
         }
     },
 
-    updateProfile: async (id, username, email, profile_picture) => {
+    updateProfile: async (id, username, name, profile_picture) => {
         try {
             const query = `
                 UPDATE users 
-                SET username = $1, email = $2, profile_picture = $3
+                SET username = $1, name = $2, profile_picture = $3
                 WHERE id = $4 
                 RETURNING *;
             `;
-            const values = [username, email, profile_picture, id];
+            const values = [username, name, profile_picture, id];
             const result = await db.query(query, values);
 
             return result.rows[0]; // Retorna el usuario actualizado

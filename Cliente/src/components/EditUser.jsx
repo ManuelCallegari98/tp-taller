@@ -17,7 +17,7 @@ export function DrawerDialogDemo({ user }) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     username: user.username,
-    email: user.email,
+    name: user.name,
     profile_picture: user.profile_picture || "/default-avatar.png",
   });
   const handleInputChange = (e) => {
@@ -97,11 +97,11 @@ export function DrawerDialogDemo({ user }) {
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="name">Name</Label>
             <Input
-              id="email"
-              type="email"
-              value={formData.email}
+              id="name"
+              type="name"
+              value={formData.name}
               onChange={handleInputChange}
             />
           </div>

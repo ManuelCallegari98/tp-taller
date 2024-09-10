@@ -42,10 +42,10 @@ export const loginUser = async (req, res) => {
 // Actualizar el perfil de un usuario
 export const updateUserProfile = async (req, res) => {
     const { id } = req.params;
-    const { username, email, profile_picture } = req.body;
+    const { username, name, profile_picture } = req.body;
 
     try {
-        const updatedUser = await User.updateProfile(id, username, email, profile_picture);
+        const updatedUser = await User.updateProfile(id, username, name, profile_picture);
         console.log(`User profile updated: ${id}`);
         res.status(200).json(updatedUser);
     } catch (err) {

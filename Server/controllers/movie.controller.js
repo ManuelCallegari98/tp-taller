@@ -14,7 +14,14 @@ export const getMovies = async (req, res) => {
     }
 };
 export const searchMovieByTitle = async (req, res) => {
-    const { title } = req.query;
+    const { title } = req.query; // Cambiado a req.query
+
+    if (!title) {
+        return res.status(400).json({ message: 'Title query parameter is required.' });
+    }
+
+    // Reemplaza los espacios con +
+    const formattedTitle = title.trim().replace(/ /g, '+');
 
     try {
         // Asegurarse de que la tabla exista antes de hacer consultas
@@ -30,7 +37,7 @@ export const searchMovieByTitle = async (req, res) => {
 
         // Si no se encuentra la película en la base de datos, consultar la API de OMDB
         console.log("No se encontró en la base de datos. Buscando en OMDB...");
-        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_API_KEY}`);
+        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${formattedTitle}&apikey=${OMDB_API_KEY}`);
         console.log("Respuesta de OMDB:", omdbResponse.data); // Log para ver la respuesta de OMDB
 
         if (omdbResponse.data.Response === "True") {
