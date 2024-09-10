@@ -2,7 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { db } from './database/connection.database.js';
-import userRoutes from './routes/user.routes.js';  // Importar las rutas
+import userRoutes from './routes/user.routes.js';
+import movieRoutes from './routes/movie.routes.js';  // Importar las rutas
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true })); // Para formular
 
 // Usar las rutas de usuario
 app.use('/api', userRoutes);
+app.use("/api/movies", movieRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
