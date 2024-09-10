@@ -1,78 +1,62 @@
-import Movie from "../models/Movie.js";
+import Movie from "../models/movies.model.js";
 import axios from "axios";
+const OMDB_API_KEY = "91ca3eb4";
 
-const API_KEY = "http://www.omdbapi.com/?i=tt3896198&apikey=91ca3eb4";
-
-const searchMovies = async (req, res) => {
-    const { title, genre, type } = req.query;
+export const getMovies = async (req, res) => {
+    console.log("Request received for getMovies"); // Log de la solicitud
+    try {
+      const movies = await Movie.getAllMovies(); // Usa el método correcto del modelo
+      console.log("Movies retrieved:", movies); // Log de las películas obtenidas
+      res.status(200).json(movies);
+    } catch (err) {
+      console.error('Error fetching movies:', err);
+      res.status(500).json({ message: "Error fetching movies", error: err.message });
+    }
+};
+export const searchMovieByTitle = async (req, res) => {
+    const { title } = req.query;
 
     try {
-        // Buscar en la base de datos
-        const internalResults = await Movie.findByCriteria(title, genre, type);
+        // Asegurarse de que la tabla exista antes de hacer consultas
+        await Movie.createTable();
 
-        if (internalResults.length > 0) {
-            return res.status(200).json(internalResults);
+        // Buscar la película en la base de datos
+        const movies = await Movie.findByTitle(title);
+
+        // Si se encuentran películas en la base de datos, devolverlas
+        if (movies.length > 0) {
+            return res.status(200).json(movies);
         }
 
-        // Si no hay resultados, buscar en la API de OMDB
-        const omdbResponse = await axios.get(`http://www.omdbapi.com/`, {
-            params: {
-                apikey: API_KEY,
-                s: title,
-                type,
-                genre
-            }
-        });
+        // Si no se encuentra la película en la base de datos, consultar la API de OMDB
+        console.log("No se encontró en la base de datos. Buscando en OMDB...");
+        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${OMDB_API_KEY}`);
+        console.log("Respuesta de OMDB:", omdbResponse.data); // Log para ver la respuesta de OMDB
 
         if (omdbResponse.data.Response === "True") {
-            const omdbResults = omdbResponse.data.Search;
+            const movie = omdbResponse.data;
+            const movieData = {
+                title: movie.Title,
+                type: movie.Type,
+                genre: movie.Genre,
+                release_date: movie.Released,
+                duration: movie.Runtime,
+                team: { Director: movie.Director, Writer: movie.Writer, Cast: movie.Actors },
+                cover_photo: movie.Poster,
+                country: movie.Country,
+                imdb_rating: movie.imdbRating
+            };
+            await Movie.insertMovie(movieData);
 
-            // Insertar resultados en la base de datos
-            const savedMovies = [];
-            for (const movie of omdbResults) {
-                const movieDetails = await axios.get(`http://www.omdbapi.com/`, {
-                    params: {
-                        apikey: API_KEY,
-                        i: movie.imdbID
-                    }
-                });
-
-                const newMovie = {
-                    title: movieDetails.data.Title,
-                    type: movieDetails.data.Type,
-                    genre: movieDetails.data.Genre,
-                    release_date: movieDetails.data.Released,
-                    duration: movieDetails.data.Runtime,
-                    team: {
-                        director: movieDetails.data.Director,
-                        writer: movieDetails.data.Writer,
-                        actors: movieDetails.data.Actors
-                    },
-                    cover_photo: movieDetails.data.Poster,
-                    country: movieDetails.data.Country,
-                    imdb_rating: movieDetails.data.imdbRating
-                };
-
-                const savedMovie = await Movie.insertMovie(newMovie);
-                savedMovies.push(savedMovie);
-            }
-
-            return res.status(200).json(savedMovies);
+            // Consultar nuevamente la base de datos
+            const updatedMovies = await Movie.findByTitle(title);
+            return res.status(200).json(updatedMovies);
         } else {
-            return res.status(404).json({ message: "No movies found" });
+            return res.status(404).json({ message: 'No movies found with the given title.' });
         }
     } catch (error) {
-        console.error("Error searching movies:", error);
-        return res.status(500).json({ error: "An error occurred while searching for movies." });
-    }
-};
-export const getMovies = async (req, res) => {
-    try {
-        const movies = await Movie.findAll();
-        res.status(200).json(movies);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching movies" });
+        console.error('Error searching for movie:', error);
+        res.status(500).json({ message: 'An error occurred while searching for movies.', error: error.message });
     }
 };
 
-export { searchMovies, getMovies };
