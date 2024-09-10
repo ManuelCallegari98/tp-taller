@@ -2,10 +2,10 @@ import User from '../models/user.model.js';
 
 // Crear un nuevo usuario
 export const createUser = async (req, res) => {
-    const { username, email, password, profile_picture } = req.body;
+    const { username, name, password, profile_picture } = req.body;
 
     try {
-        const user = await User.create(username, email, password, profile_picture);
+        const user = await User.create(username, name, password, profile_picture);
         console.log(`User created: ${user.id}`);
         res.status(201).json(user);
     } catch (err) {
@@ -92,3 +92,16 @@ export const getAllUsers = async (req, res) => {
       res.status(500).json({ error: err.message });
     }
   };
+
+  export const updateUserList = async (req, res) => {
+    const { id , movieid } = req.body;
+
+    try {
+        const updatedUserList = await User.updateUserList(id,movieid);
+        console.log(`User list updated: ${id}`);
+        res.status(200).json(updatedUserList);
+    } catch (err) {
+        console.log(`Error updating profile: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};

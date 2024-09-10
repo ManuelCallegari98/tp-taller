@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const router = useRouter();
 
@@ -37,14 +37,14 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, email, profile_picture: profilePicture }),
+        body: JSON.stringify({ username, password, name, profile_picture: profilePicture }),
       });
 
       if (response.ok) {
         // Redirige a la página de inicio de sesión
         router.push("/browse/dashboard");
         setUsername("");
-        setEmail("");
+        setName("");
         setPassword("");
         setProfilePicture("");
       } else {
@@ -86,14 +86,14 @@ export default function Register() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="name">Name</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="user@example.com"
+                id="name"
+                type="text"
+                placeholder="John Doe"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="grid gap-2">

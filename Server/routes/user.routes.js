@@ -5,7 +5,8 @@ import {
     updateUserProfile,
     updateUserPassword,
     deleteUser,
-    getAllUsers
+    getAllUsers,
+    updateUserList
 } from '../controllers/user.controller.js';
 
 const router = express.Router();
@@ -27,6 +28,9 @@ router.delete('/users/:id', deleteUser);
 
 // Ruta para obtener todos los usuarios
 router.get('/users', getAllUsers);
+
+// Ruta para agregar pelicula a la lista
+router.post('/users/list', updateUserList);
 
 export default router;
 
