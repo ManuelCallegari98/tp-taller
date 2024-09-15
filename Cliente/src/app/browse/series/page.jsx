@@ -14,7 +14,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
 
 export default function SeriesPage() {
@@ -23,6 +22,7 @@ export default function SeriesPage() {
   const [filteredSeries, setFilteredSeries] = useState([]);
   const [open, setOpen] = useState(false);
   const [serieTitle, setSerieTitle] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState(""); // Estado para el género seleccionado
 
   useEffect(() => {
     const fetchSeries = async () => {
@@ -30,7 +30,6 @@ export default function SeriesPage() {
         const response = await fetch("http://localhost:4000/api/movies"); // Actualizar endpoint si es diferente
         if (response.ok) {
           const data = await response.json();
-          // Filtrar solo las series
           const seriesOnly = data.filter(serie => serie.type === 'series');
           setSeries(seriesOnly);
           setFilteredSeries(seriesOnly); // Inicialmente, todas las series están filtradas
@@ -46,28 +45,34 @@ export default function SeriesPage() {
   }, []);
 
   useEffect(() => {
+    let filtered = series;
+
+    // Filtrar series por término de búsqueda
     if (searchTerm) {
-      // Filtrar series por término de búsqueda
-      const filtered = series.filter((serie) =>
+      filtered = filtered.filter((serie) =>
         serie.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredSeries(filtered);
-    } else {
-      // Si no hay término de búsqueda, mostrar todas las series
-      setFilteredSeries(series);
     }
-  }, [searchTerm, series]);
+
+    // Filtrar por género si hay un género seleccionado
+    if (selectedGenre) {
+      filtered = filtered.filter((serie) =>
+        serie.genre.toLowerCase().includes(selectedGenre.toLowerCase())
+      );
+    }
+
+    setFilteredSeries(filtered);
+  }, [searchTerm, selectedGenre, series]);
 
   const handleAddSerie = async () => {
     const formattedTitle = serieTitle.trim().replace(/ /g, '+');
 
     try {
-      const response = await fetch(`http://localhost:4000/api/movies/searchbytitle?title=${formattedTitle}`, {
+      const response = await fetch(`http://localhost:4000/api/movies/searchbytitle?title=${formattedTitle}&type=series`, {
         method: "GET",
       });
       if (response.ok) {
         const data = await response.json();
-        // Filtrar solo las series
         const seriesOnly = data.filter(serie => serie.type === 'series');
         setSeries(prevSeries => [...prevSeries, ...seriesOnly]);
         setFilteredSeries(prevSeries => [...prevSeries, ...seriesOnly]); // Actualiza también los filtrados
@@ -81,6 +86,9 @@ export default function SeriesPage() {
       console.error("Error adding serie:", error);
     }
   };
+
+  // Obtener lista única de géneros a partir de las series disponibles
+  const genres = [...new Set(series.flatMap((serie) => serie.genre.split(", ").map((genre) => genre.trim())))];
 
   return (
     <div className="flex flex-col h-[85vh]">
@@ -120,6 +128,22 @@ export default function SeriesPage() {
             </DialogContent>
           </DialogPortal>
         </Dialog>
+      </div>
+      <div className="m-2">
+        <label htmlFor="genre-select" className="mr-2">Filter by Genre:</label>
+        <select
+          id="genre-select"
+          value={selectedGenre}
+          onChange={(e) => setSelectedGenre(e.target.value)}
+          className="rounded-lg bg-background pl-2"
+        >
+          <option value="">All Genres</option>
+          {genres.map((genre) => (
+            <option key={genre} value={genre}>
+              {genre}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex-grow overflow-y-scroll w-full">

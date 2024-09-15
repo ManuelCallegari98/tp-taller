@@ -14,10 +14,10 @@ export const getMovies = async (req, res) => {
     }
 };
 export const searchMovieByTitle = async (req, res) => {
-    const { title } = req.query; // Cambiado a req.query
+    const { title, type } = req.query;
 
-    if (!title) {
-        return res.status(400).json({ message: 'Title query parameter is required.' });
+    if (!title || !type) {
+        return res.status(400).json({ message: 'Title and type query parameters are required.' });
     }
 
     // Reemplaza los espacios con +
@@ -27,21 +27,28 @@ export const searchMovieByTitle = async (req, res) => {
         // Asegurarse de que la tabla exista antes de hacer consultas
         await Movie.createTable();
 
-        // Buscar la película en la base de datos
+        // Buscar la película o serie en la base de datos
         const movies = await Movie.findByTitle(title);
 
-        // Si se encuentran películas en la base de datos, devolverlas
-        if (movies.length > 0) {
-            return res.status(200).json(movies);
+        // Filtrar las películas o series según el tipo
+        const filteredMovies = movies.filter(movie => movie.type === type);
+
+        // Si se encuentran películas o series que coincidan con el tipo, devolverlas
+        if (filteredMovies.length > 0) {
+            return res.status(200).json(filteredMovies);
         }
 
-        // Si no se encuentra la película en la base de datos, consultar la API de OMDB
+        // Si no se encuentra la película o serie en la base de datos, consultar la API de OMDB
         console.log("No se encontró en la base de datos. Buscando en OMDB...");
-        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${formattedTitle}&apikey=${OMDB_API_KEY}`);
-        console.log("Respuesta de OMDB:", omdbResponse.data); // Log para ver la respuesta de OMDB
+        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${formattedTitle}&type=${type}&apikey=${OMDB_API_KEY}`);
+        console.log("Respuesta de OMDB:", omdbResponse.data);
 
         if (omdbResponse.data.Response === "True") {
             const movie = omdbResponse.data;
+            if (movie.Type !== type) {
+                return res.status(404).json({ message: `No ${type}s found with the given title.` });
+            }
+
             const movieData = {
                 title: movie.Title,
                 type: movie.Type,
@@ -59,11 +66,11 @@ export const searchMovieByTitle = async (req, res) => {
             const updatedMovies = await Movie.findByTitle(title);
             return res.status(200).json(updatedMovies);
         } else {
-            return res.status(404).json({ message: 'No movies found with the given title.' });
+            return res.status(404).json({ message: `No ${type}s found with the given title.` });
         }
     } catch (error) {
-        console.error('Error searching for movie:', error);
-        res.status(500).json({ message: 'An error occurred while searching for movies.', error: error.message });
+        console.error('Error searching for movie or series:', error);
+        res.status(500).json({ message: 'An error occurred while searching for movies or series.', error: error.message });
     }
 };
 

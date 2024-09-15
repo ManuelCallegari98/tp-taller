@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import MovieCard from "@/components/MovieCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,7 @@ export default function MoviesPage() {
   const [filteredMovies, setFilteredMovies] = useState([]);
   const [open, setOpen] = useState(false);
   const [movieTitle, setMovieTitle] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState(""); // Estado para el género seleccionado
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -31,7 +32,9 @@ export default function MoviesPage() {
         if (response.ok) {
           const data = await response.json();
           // Filtrar solo las películas
-          const moviesOnly = data.filter(movie => movie.type === 'movie');
+          const moviesOnly = data
+            .filter(movie => movie.type === 'movie')
+            .sort((a, b) => a.title.localeCompare(b.title));
           setMovies(moviesOnly);
           setFilteredMovies(moviesOnly); // Inicialmente, todas las películas están filtradas
         } else {
@@ -46,23 +49,35 @@ export default function MoviesPage() {
   }, []);
 
   useEffect(() => {
+    let filtered = movies;
+
+    // Filtrar películas por término de búsqueda
     if (searchTerm) {
-      // Filtrar películas por término de búsqueda
-      const filtered = movies.filter((movie) =>
+      filtered = filtered.filter((movie) =>
         movie.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredMovies(filtered);
-    } else {
-      // Si no hay término de búsqueda, mostrar todas las películas
-      setFilteredMovies(movies);
     }
-  }, [searchTerm, movies]);
+
+    // Filtrar por género
+    if (selectedGenre) {
+      filtered = filtered.filter((movie) =>
+        movie.genre.toLowerCase().includes(selectedGenre.toLowerCase())
+      );
+    }
+
+    // Ordenar alfabéticamente
+    filtered = filtered.sort((a, b) =>
+      a.title.localeCompare(b.title)
+    );
+
+    setFilteredMovies(filtered);
+  }, [searchTerm, selectedGenre, movies]);
 
   const handleAddMovie = async () => {
     const formattedTitle = movieTitle.trim().replace(/ /g, '+');
 
     try {
-      const response = await fetch(`http://localhost:4000/api/movies/searchbytitle?title=${formattedTitle}`, {
+      const response = await fetch(`http://localhost:4000/api/movies/searchbytitle?title=${formattedTitle}&type=movie`, {
         method: "GET",
       });
       if (response.ok) {
@@ -80,6 +95,9 @@ export default function MoviesPage() {
       console.error("Error adding movie:", error);
     }
   };
+
+  // Obtener una lista única de géneros para el selector
+  const genres = [...new Set(movies.flatMap((movie) => movie.genre.split(", ").map((genre) => genre.trim())))];
 
   return (
     <div className="flex flex-col h-[85vh]">
@@ -119,6 +137,24 @@ export default function MoviesPage() {
             </DialogContent>
           </DialogPortal>
         </Dialog>
+      </div>
+
+      {/* Selector de género */}
+      <div className="m-2">
+        <label htmlFor="genre" className="mr-2">Filter by Genre:</label>
+        <select
+          id="genre"
+          value={selectedGenre}
+          onChange={(e) => setSelectedGenre(e.target.value)}
+          className="rounded-lg bg-background pl-2"
+        >
+          <option value="">All genres</option>
+          {genres.map((genre) => (
+            <option key={genre} value={genre}>
+              {genre}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex-grow overflow-y-scroll w-full">
