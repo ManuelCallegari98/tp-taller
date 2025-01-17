@@ -1,9 +1,6 @@
-import * as React from "react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
+'use client';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -11,113 +8,156 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { sessionService } from '@/services/sessionService';
 
-export function DrawerDialogDemo({ user }) {
+export function DrawerDialogDemo({ user, onUserUpdated }) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     username: user.username,
-    name: user.name,
-    profile_picture: user.profile_picture || "/default-avatar.png",
+    fullName: user.fullName,
+    profilePicture: user.profilePicture,
+    password: '',
+    confirmPassword: ''
   });
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
-  };
-  const router = useRouter();
-  // Función para manejar la carga de imágenes
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({
-          ...formData,
-          profile_picture: reader.result, // Base64 string
-        });
+        setFormData(prev => ({
+          ...prev,
+          profilePicture: reader.result
+        }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:4000/api/users/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!res.ok) {
-        throw new Error("Error updating profile");
+      const activeUser = sessionService.getSession();
+      if (!activeUser) {
+        throw new Error('No hay usuario activo');
       }
 
-      const updatedUser = await res.json();
-      console.log("Profile updated", updatedUser);
+      // Validar contraseñas si se está intentando cambiar
+      if (formData.password || formData.confirmPassword) {
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Las contraseñas no coinciden');
+        }
+        if (formData.password.length < 6) {
+          throw new Error('La contraseña debe tener al menos 6 caracteres');
+        }
+      }
+
+      const response = await fetch(`http://localhost:4000/api/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          fullName: formData.fullName,
+          profilePicture: formData.profilePicture,
+          password: formData.password || undefined, // Solo enviamos la contraseña si se modificó
+          id: activeUser.id,
+          isAdmin: activeUser.isAdmin
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al actualizar el usuario');
+      }
+
+      const updatedUser = await response.json();
+      onUserUpdated(updatedUser);
       setOpen(false);
-      window.location.reload();
     } catch (error) {
-      console.error(error.message);
+      console.error('Error:', error);
+      alert(error.message || 'Error al actualizar el usuario');
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Edit Profile</Button>
+        <Button variant="outline" size="sm">Editar</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
+          <DialogTitle>Editar Usuario</DialogTitle>
           <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
+            Modifica los datos del usuario aquí. Haz clic en guardar cuando termines.
           </DialogDescription>
         </DialogHeader>
-        <form className="grid gap-4">
-          <div className="flex justify-center">
-            <img
-              src={formData.profile_picture}
-              alt="Profile"
-              width="150"
-              height="150"
-              className="h-24 w-24 object-cover rounded-full"
-            />
-          </div>
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid w-full items-center gap-1.5">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
-              type="text"
               value={formData.username}
-              onChange={handleInputChange}
+              onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="fullName">Nombre completo</Label>
             <Input
-              id="name"
-              type="name"
-              value={formData.name}
-              onChange={handleInputChange}
+              id="fullName"
+              value={formData.fullName}
+              onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="profile_picture">Profile Picture</Label>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="profilePicture">Foto de perfil</Label>
             <Input
-              id="profile_picture"
+              id="profilePicture"
               type="file"
               accept="image/*"
-              onChange={handleImageChange}
+              onChange={handleFileChange}
             />
           </div>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="password">Nueva contraseña (opcional)</Label>
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+            />
+          </div>
+          <div className="grid w-full items-center gap-1.5">
+            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Input
+              id="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showPassword"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+            />
+            <Label htmlFor="showPassword">Mostrar contraseña</Label>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit">Guardar cambios</Button>
+          </div>
         </form>
-        <Button onClick={handleSave} className="w-full mt-4">
-          Save changes
-        </Button>
       </DialogContent>
     </Dialog>
   );

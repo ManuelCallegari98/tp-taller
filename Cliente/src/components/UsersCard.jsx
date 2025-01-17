@@ -3,43 +3,40 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DrawerDialogDemo } from '@/components/EditUser';
+import { UserCircle2 } from 'lucide-react';
 
-export default function UserCard({ user }) {
+export default function UserCard({ user, onUserUpdated }) {
   const activeUserString = sessionStorage.getItem('user');
-
-  // Parsear el string JSON en un objeto
   const activeUser = activeUserString ? JSON.parse(activeUserString) : null;
-
-  // Determinar si el usuario activo es un administrador
-  const isAdmin = activeUser?.user.is_admin;
+  const isAdmin = activeUser?.isAdmin;
 
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4">
-        {/* Div con tamaño fijo de 40px x 40px */}
         <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 mt-4">
-          {/* Imagen con tamaño fijo de 40px x 40px */}
-          <img
-            src={user.profile_picture}
-            alt="profile picture"
-            className="w-full h-full object-cover"
-          />
+          {user.profilePicture ? (
+            <img
+              src={user.profilePicture}
+              alt={`${user.username}'s avatar`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <UserCircle2 className="w-8 h-8 text-gray-500" />
+          )}
         </div>
 
         <div className="text-center">
           <div className="font-medium">{user.username}</div>
           <div className="text-sm text-muted-foreground">
-            {user.is_admin ? 'Admin' : 'User'}
+            {user.fullName}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {user.isAdmin ? 'Administrator' : 'User'}
           </div>
         </div>
         <div className="flex gap-2">
           {isAdmin && (
-            <>
-              <Button variant="outline" size="md">
-                View
-              </Button>
-              <DrawerDialogDemo user={user} />
-            </>
+            <DrawerDialogDemo user={user} onUserUpdated={onUserUpdated} />
           )}
         </div>
       </CardContent>

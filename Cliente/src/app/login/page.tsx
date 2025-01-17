@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { sessionService } from "@/services/sessionService";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/login', {
+      const response = await fetch('http://localhost:4000/api/users/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,21 +31,23 @@ export default function Login() {
         body: JSON.stringify({ username, password }),
       });
 
-      if (response.status === 200) {
-        const data = await response.json();
-        console.log("Response:", data);
-
-        // Guardar el estado de login y el objeto del usuario en SessionStorage
-        sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('user', JSON.stringify(data));
-
-        // Redirigir a /browse
+      if (response.ok) {
+        const userData = await response.json();
+        console.log("Response:", userData);
         router.push('/browse');
+
+        // Usar sessionService para guardar los datos
+        sessionService.setSession(userData);
+
+
       } else {
-        console.error("Login failed with status:", response.status);
+        const errorData = await response.json();
+        console.error("Login failed:", errorData.error);
+        alert(`Error: ${errorData.error}`);
       }
     } catch (error) {
       console.error("Error:", error);
+      alert("Error al iniciar sesión. Por favor, intenta de nuevo.");
     }
   };
 
@@ -104,4 +107,3 @@ export default function Login() {
     </div>
   );
 }
-

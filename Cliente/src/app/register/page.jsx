@@ -1,5 +1,7 @@
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { sessionService } from "@/services/sessionService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,21 +12,47 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
+
 
 export default function Register() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
+  const [canRegister, setCanRegister] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      try {
+        const response = await fetch('http://localhost:4000/api/users/count');
+        const { count } = await response.json();
+        const user = sessionService.getSession();
+
+        // Verificar si hay usuarios registrados
+
+        // Permitir registro solo si es admin o no hay usuarios
+        if (count === 0 || user.isAdmin ) {
+          console.log("Puede registrar");
+          setCanRegister(true);
+        } else {
+          router.push('/browse/dashboard');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        router.push('/login');
+      }
+    };
+
+    checkAccess();
+  }, []);
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePicture(reader.result); // Base64 string
+        setProfilePicture(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -32,29 +60,34 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
-      const response = await fetch("http://localhost:4000/api/users", {
+      const response = await fetch("http://localhost:4000/api/users/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, name, profile_picture: profilePicture }),
+        body: JSON.stringify({
+          username,
+          password,
+          fullName: name,
+          profilePicture
+        }),
       });
 
       if (response.ok) {
-        // Redirige a la página de inicio de sesión
         router.push("/browse/dashboard");
-        setUsername("");
-        setName("");
-        setPassword("");
-        setProfilePicture("");
       } else {
-        const text = await response.text();
-        console.error("Error response:", text);
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
       }
     } catch (error) {
       console.error("Error al registrar:", error);
+      alert("Error en el registro. Por favor, intenta de nuevo.");
     }
   };
+
+  if (!canRegister) {
+    return null; // o un componente de carga
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">

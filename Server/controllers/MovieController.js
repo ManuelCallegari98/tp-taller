@@ -1,4 +1,4 @@
-import Movie from "../models/movies.model.js";
+/*import Movie from "../models/movies.model.js";
 import axios from "axios";
 const OMDB_API_KEY = "91ca3eb4";
 
@@ -73,4 +73,59 @@ export const searchMovieByTitle = async (req, res) => {
         res.status(500).json({ message: 'An error occurred while searching for movies or series.', error: error.message });
     }
 };
+*/
+// controllers/MovieController.js
+// controllers/MovieController.js
+import MovieService from '../Services/MovieService.js';
 
+export const getAllMovies = async (req, res) => {
+    try {
+        const movies = await MovieService.getAllMovies();
+        res.status(200).json(movies);
+    } catch (error) {
+        console.error('Error getting all movies:', error);
+        res.status(500).json({ message: 'Error getting movies', error: error.message });
+    }
+};
+
+export const getMoviesByType = async (req, res) => {
+    try {
+        const { type } = req.query;
+        if (!type) {
+            return res.status(400).json({ message: 'Type parameter is required' });
+        }
+        const movies = await MovieService.getMoviesByType(type);
+        res.status(200).json(movies);
+    } catch (error) {
+        console.error('Error getting movies by type:', error);
+        res.status(500).json({ message: 'Error getting movies', error: error.message });
+    }
+};
+
+export const searchMovies = async (req, res) => {
+    try {
+        const { query, type } = req.query;
+        if (!query) {
+            return res.status(400).json({ message: 'Query parameter is required' });
+        }
+        const movies = await MovieService.searchMovies(query, type);
+        res.status(200).json(movies);
+    } catch (error) {
+        console.error('Error searching movies:', error);
+        res.status(500).json({ message: 'Error searching movies', error: error.message });
+    }
+};
+
+export const getMoviesByGenre = async (req, res) => {
+    try {
+        const { genre, type } = req.query;
+        if (!genre) {
+            return res.status(400).json({ message: 'Genre parameter is required' });
+        }
+        const movies = await MovieService.getMoviesByGenre(genre, type);
+        res.status(200).json(movies);
+    } catch (error) {
+        console.error('Error getting movies by genre:', error);
+        res.status(500).json({ message: 'Error getting movies by genre', error: error.message });
+    }
+};

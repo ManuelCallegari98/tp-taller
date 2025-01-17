@@ -1,10 +1,9 @@
 import { ModeToggle } from "@/components/switch-mode";
-import Image from "next/image";
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <body>
-      
-    </body>
-  );
+  // Redirigir a /browse
+  redirect('/browse');
+  
+  return null;
 }

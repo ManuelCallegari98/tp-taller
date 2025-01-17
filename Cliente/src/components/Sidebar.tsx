@@ -8,12 +8,17 @@ import {
   Tv,
   Settings,
   Popcorn,
-  User,
+  User as UserIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Separator } from "./ui/separator";
+import { User } from "@/types/user";
 
-export default function Sidebar() {
+interface SidebarProps {
+  user: User;
+}
+
+export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -37,11 +42,7 @@ export default function Sidebar() {
             <Link
               href="/browse/movies"
               className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${
-                  pathname === "/browse/movies"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                ${pathname === "/browse/movies" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Film className="h-4 w-4" />
               Movies
@@ -49,11 +50,7 @@ export default function Sidebar() {
             <Link
               href="/browse/series"
               className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${
-                  pathname === "/browse/series"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                ${pathname === "/browse/series" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Tv className="h-4 w-4" />
               Series
@@ -61,11 +58,7 @@ export default function Sidebar() {
             <Link
               href="/browse/my-list"
               className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${
-                  pathname === "/browse/my-list"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                ${pathname === "/browse/my-list" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Heart className="h-4 w-4" />
               My List
@@ -73,40 +66,21 @@ export default function Sidebar() {
             <Link
               href="/browse/watched"
               className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${
-                  pathname === "/browse/watched"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                ${pathname === "/browse/watched" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
               <Eye className="h-5 w-5" />
               Watched
             </Link>
-            <Link
-              href="/browse/dashboard"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                  ${
-                    pathname === "/browse/dashboard"
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-            >
-              <User className="h-5 w-5" />
-              Users
-            </Link>
-            <Link
-              href="/browse/profile"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
-                ${
-                  pathname === "/browse/profile"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <Settings className="h-5 w-5" />
-              Settings
-            </Link>
-
+            {user.isAdmin && (
+              <Link
+                href="/browse/dashboard"
+                className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 
+                  ${pathname === "/browse/dashboard" ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <UserIcon className="h-5 w-5" />
+                Users
+              </Link>
+            )}
           </nav>
         </div>
       </div>

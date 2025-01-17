@@ -11,7 +11,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ModeToggle } from "@/components/switch-mode";
 import {
-  User,
+  User as UserIcon,
   CircleUser,
   Popcorn,
   Home,
@@ -21,30 +21,23 @@ import {
   Tv,
   Settings,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { User } from "@/types/user";
+import { sessionService } from "@/services/sessionService";
 
 const NoSSR = dynamic(() => import("../components/no-ssr"), { ssr: false });
 
-export default function Header() {
+interface HeaderProps {
+  user: User;
+}
+
+export default function Header({ user }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const activeUserString = sessionStorage.getItem('user');
-  
-  // Parsear el string JSON en un objeto
-  const activeUser = activeUserString ? JSON.parse(activeUserString) : null;
-  
-  // Determinar si el usuario activo es un administrador
-  const avatar = activeUser?.user.profile_picture;
-
   const handleLogout = () => {
-    // Elimina la sesión del sessionStorage
-    sessionStorage.removeItem("isLoggedIn");
-    sessionStorage.removeItem("user");
-
-    // Redirecciona a la página de inicio o login
+    sessionService.clearSession();
     router.push("/login");
   };
 
@@ -138,35 +131,55 @@ export default function Header() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
             >
-              <User className="h-5 w-5" />
+              <UserIcon className="h-5 w-5" />
               Users
             </Link>
           </nav>
         </SheetContent>
       </Sheet>
-      <div className="ml-auto flex items-center gap-4">
+      <div className="flex-1" />
+      <div className="flex items-center gap-4">
         <ModeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="relative flex items-center justify-center w-10 h-10 rounded-full p-0 overflow-hidden"
-            >
-              <img
-                src={avatar}
-                alt="User Profile"
-                width={100}
-                height={100}
-                className="object-cover w-full h-full rounded-full"
-              />
-              <span className="sr-only">Toggle user menu</span>
+            <Button variant="ghost" className="relative ">
+              {user.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={user.username}
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+              ) : (
+                <CircleUser className="h-6 w-6" />
+              )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={5}>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+          <DropdownMenuContent align="end">
+            <div className="flex items-center justify-start gap-2 p-2">
+              <div className="flex flex-col space-y-1 leading-none">
+                <p className="font-medium">{user.username}</p>
+                <p className="text-sm text-muted-foreground">{user.fullName}</p>
+              </div>
+            </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/browse/profile">
+                <UserIcon className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+            </DropdownMenuItem>
+            {user.isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link href="/browse/dashboard">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout}>
+              Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
