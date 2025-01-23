@@ -1,89 +1,26 @@
-/*import Movie from "../models/movies.model.js";
-import axios from "axios";
-const OMDB_API_KEY = "91ca3eb4";
-
-export const getMovies = async (req, res) => {
-    console.log("Request received for getMovies"); // Log de la solicitud
-    try {
-      const movies = await Movie.getAllMovies(); // Usa el método correcto del modelo
-      console.log("Movies retrieved:", movies); // Log de las películas obtenidas
-      res.status(200).json(movies);
-    } catch (err) {
-      console.error('Error fetching movies:', err);
-      res.status(500).json({ message: "Error fetching movies", error: err.message });
-    }
-};
-export const searchMovieByTitle = async (req, res) => {
-    const { title, type } = req.query;
-
-    if (!title || !type) {
-        return res.status(400).json({ message: 'Title and type query parameters are required.' });
-    }
-
-    // Reemplaza los espacios con +
-    const formattedTitle = title.trim().replace(/ /g, '+');
-
-    try {
-        // Asegurarse de que la tabla exista antes de hacer consultas
-        await Movie.createTable();
-
-        // Buscar la película o serie en la base de datos
-        const movies = await Movie.findByTitle(title);
-
-        // Filtrar las películas o series según el tipo
-        const filteredMovies = movies.filter(movie => movie.type === type);
-
-        // Si se encuentran películas o series que coincidan con el tipo, devolverlas
-        if (filteredMovies.length > 0) {
-            return res.status(200).json(filteredMovies);
-        }
-
-        // Si no se encuentra la película o serie en la base de datos, consultar la API de OMDB
-        console.log("No se encontró en la base de datos. Buscando en OMDB...");
-        const omdbResponse = await axios.get(`http://www.omdbapi.com/?t=${formattedTitle}&type=${type}&apikey=${OMDB_API_KEY}`);
-        console.log("Respuesta de OMDB:", omdbResponse.data);
-
-        if (omdbResponse.data.Response === "True") {
-            const movie = omdbResponse.data;
-            if (movie.Type !== type) {
-                return res.status(404).json({ message: `No ${type}s found with the given title.` });
-            }
-
-            const movieData = {
-                title: movie.Title,
-                type: movie.Type,
-                genre: movie.Genre,
-                release_date: movie.Released,
-                duration: movie.Runtime,
-                team: { Director: movie.Director, Writer: movie.Writer, Cast: movie.Actors },
-                cover_photo: movie.Poster,
-                country: movie.Country,
-                imdb_rating: movie.imdbRating
-            };
-            await Movie.insertMovie(movieData);
-
-            // Consultar nuevamente la base de datos
-            const updatedMovies = await Movie.findByTitle(title);
-            return res.status(200).json(updatedMovies);
-        } else {
-            return res.status(404).json({ message: `No ${type}s found with the given title.` });
-        }
-    } catch (error) {
-        console.error('Error searching for movie or series:', error);
-        res.status(500).json({ message: 'An error occurred while searching for movies or series.', error: error.message });
-    }
-};
-*/
-// controllers/MovieController.js
 // controllers/MovieController.js
 import MovieService from '../Services/MovieService.js';
+import logger from '../config/logger.js';
 
 export const getAllMovies = async (req, res) => {
     try {
+        logger.info('Solicitud de obtener todas las películas', {
+            action: 'GET_ALL_MOVIES'
+        });
+
         const movies = await MovieService.getAllMovies();
+        logger.info('Películas recuperadas exitosamente', {
+            action: 'GET_ALL_MOVIES_SUCCESS',
+            count: movies.length
+        });
+
         res.status(200).json(movies);
     } catch (error) {
-        console.error('Error getting all movies:', error);
+        logger.error('Error al obtener todas las películas', {
+            error: error.message,
+            stack: error.stack,
+            action: 'GET_ALL_MOVIES_ERROR'
+        });
         res.status(500).json({ message: 'Error getting movies', error: error.message });
     }
 };
@@ -91,41 +28,104 @@ export const getAllMovies = async (req, res) => {
 export const getMoviesByType = async (req, res) => {
     try {
         const { type } = req.query;
+        
         if (!type) {
+            logger.warn('Intento de búsqueda por tipo sin especificar el tipo', {
+                action: 'GET_MOVIES_BY_TYPE_MISSING_PARAM'
+            });
             return res.status(400).json({ message: 'Type parameter is required' });
         }
+
+        logger.info('Solicitud de películas por tipo', {
+            action: 'GET_MOVIES_BY_TYPE',
+            type
+        });
+
         const movies = await MovieService.getMoviesByType(type);
+        logger.info('Películas por tipo recuperadas exitosamente', {
+            action: 'GET_MOVIES_BY_TYPE_SUCCESS',
+            type,
+            count: movies.length
+        });
+
         res.status(200).json(movies);
     } catch (error) {
-        console.error('Error getting movies by type:', error);
+        logger.error('Error al obtener películas por tipo', {
+            error: error.message,
+            stack: error.stack,
+            action: 'GET_MOVIES_BY_TYPE_ERROR',
+            type: req.query.type
+        });
         res.status(500).json({ message: 'Error getting movies', error: error.message });
     }
 };
 
 export const searchMovies = async (req, res) => {
     try {
-        const { query, type } = req.query;
+        const { query } = req.query;
+        
         if (!query) {
-            return res.status(400).json({ message: 'Query parameter is required' });
+            logger.warn('Intento de búsqueda sin término de búsqueda', {
+                action: 'SEARCH_MOVIES_MISSING_PARAM'
+            });
+            return res.status(400).json({ message: 'Search query is required' });
         }
-        const movies = await MovieService.searchMovies(query, type);
+
+        logger.info('Solicitud de búsqueda de películas', {
+            action: 'SEARCH_MOVIES',
+            searchQuery: query
+        });
+
+        const movies = await MovieService.searchMovies(query);
+        logger.info('Búsqueda de películas completada', {
+            action: 'SEARCH_MOVIES_SUCCESS',
+            searchQuery: query,
+            resultsCount: movies.length
+        });
+
         res.status(200).json(movies);
     } catch (error) {
-        console.error('Error searching movies:', error);
+        logger.error('Error en la búsqueda de películas', {
+            error: error.message,
+            stack: error.stack,
+            action: 'SEARCH_MOVIES_ERROR',
+            searchQuery: req.query.query
+        });
         res.status(500).json({ message: 'Error searching movies', error: error.message });
     }
 };
 
 export const getMoviesByGenre = async (req, res) => {
     try {
-        const { genre, type } = req.query;
+        const { genre } = req.query;
+        
         if (!genre) {
+            logger.warn('Intento de búsqueda por género sin especificar el género', {
+                action: 'GET_MOVIES_BY_GENRE_MISSING_PARAM'
+            });
             return res.status(400).json({ message: 'Genre parameter is required' });
         }
-        const movies = await MovieService.getMoviesByGenre(genre, type);
+
+        logger.info('Solicitud de películas por género', {
+            action: 'GET_MOVIES_BY_GENRE',
+            genre
+        });
+
+        const movies = await MovieService.getMoviesByGenre(genre);
+        logger.info('Películas por género recuperadas exitosamente', {
+            action: 'GET_MOVIES_BY_GENRE_SUCCESS',
+            genre,
+            count: movies.length
+        });
+
         res.status(200).json(movies);
     } catch (error) {
-        console.error('Error getting movies by genre:', error);
+        logger.error('Error al obtener películas por género', {
+            error: error.message,
+            stack: error.stack,
+            action: 'GET_MOVIES_BY_GENRE_ERROR',
+            genre: req.query.genre
+        });
         res.status(500).json({ message: 'Error getting movies by genre', error: error.message });
     }
 };

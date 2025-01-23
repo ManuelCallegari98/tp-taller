@@ -19,33 +19,21 @@ import { MovieCardItem } from "@/types/movieCard";
 
 interface MovieCardProps {
   item: MovieCardItem;
-  onUpdate?: () => void;
+  isInWatchlist: boolean;
+  onWatchlistChange: () => void;
+  onUpdate?: () => void; // Mantener onUpdate opcional para ratings
 }
 
-const MovieCard = ({ item, onUpdate }: MovieCardProps) => {
+const MovieCard = ({ item, isInWatchlist: initialIsInWatchlist, onWatchlistChange, onUpdate }: MovieCardProps) => {
   const { toast } = useToast();
   const user = sessionService.getSession();
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [isInWatchlist, setIsInWatchlist] = useState(initialIsInWatchlist);
 
-  useEffect(() => {
-    const checkWatchlist = async () => {
-      if (user) {
-        try {
-          const response = await fetch(`http://localhost:4000/api/watchlist/${user.id}`);
-          if (!response.ok) throw new Error('Error al verificar watchlist');
-          const data = await response.json();
-          setIsInWatchlist(data.some((watchItem: any) => watchItem.movieId.toString() === item.id.toString()));
-        } catch (error) {
-          console.error('Error:', error);
-        }
-      }
-    };
-    checkWatchlist();
-  }, [user, item.id]);
+  // Eliminar el useEffect que verifica watchlist
 
   const handleWatchlistToggle = async () => {
     if (!user) {
@@ -63,11 +51,6 @@ const MovieCard = ({ item, onUpdate }: MovieCardProps) => {
           method: 'DELETE',
         });
         if (!response.ok) throw new Error('Error al eliminar de la watchlist');
-        setIsInWatchlist(false);
-        toast({
-          title: "Éxito",
-          description: "Eliminado de tu lista",
-        });
       } else {
         const response = await fetch(`http://localhost:4000/api/watchlist`, {
           method: 'POST',
@@ -80,13 +63,15 @@ const MovieCard = ({ item, onUpdate }: MovieCardProps) => {
           const error = await response.json();
           throw new Error(error.message || 'Error al agregar a la watchlist');
         }
-        setIsInWatchlist(true);
-        toast({
-          title: "Éxito",
-          description: "Agregado a tu lista",
-        });
       }
-      if (onUpdate) onUpdate();
+
+      setIsInWatchlist(!isInWatchlist);
+      onWatchlistChange();
+
+      toast({
+        title: "Éxito",
+        description: isInWatchlist ? "Eliminado de tu lista" : "Agregado a tu lista",
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -95,6 +80,7 @@ const MovieCard = ({ item, onUpdate }: MovieCardProps) => {
       });
     }
   };
+
 
   const handleRating = async () => {
     if (!user) {

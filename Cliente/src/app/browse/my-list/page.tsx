@@ -20,7 +20,7 @@ export default function MyList() {
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   const fetchWatchlist = async () => {
-    if (!user) {
+    if (!user?.id) {
       setIsLoading(false);
       return;
     }
@@ -29,8 +29,7 @@ export default function MyList() {
       const response = await fetch(`http://localhost:4000/api/watchlist/${user.id}`);
       if (!response.ok) throw new Error('Error al cargar la watchlist');
       const data = await response.json();
-      
-      // Transformar los datos al formato MovieCardItem
+
       const transformedData = data.map((item: any) => ({
         id: item.movieId,
         title: item.Movie.title,
@@ -50,7 +49,7 @@ export default function MyList() {
         awards: item.Movie.awards,
         ratings: item.Movie.ratings
       }));
-      
+
       setWatchlistItems(transformedData);
       setFilteredItems(transformedData);
     } catch (error) {
@@ -65,22 +64,24 @@ export default function MyList() {
   };
 
   useEffect(() => {
-    fetchWatchlist();
-  }, [user]);
+    if (user?.id) {
+      fetchWatchlist();
+    }
+  }, [user?.id]); // Solo depender del ID del usuario
 
-  // Aplicar filtro de búsqueda
   useEffect(() => {
     if (!debouncedSearch) {
       setFilteredItems(watchlistItems);
       return;
     }
-
+  
     const filtered = watchlistItems.filter(item =>
       item.title.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
     setFilteredItems(filtered);
   }, [debouncedSearch, watchlistItems]);
-
+  
+  // Agregar el manejo de estados de carga y usuario no autenticado
   if (!user) {
     return (
       <div className="container mx-auto p-4">
@@ -89,7 +90,7 @@ export default function MyList() {
       </div>
     );
   }
-
+  
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
@@ -105,6 +106,7 @@ export default function MyList() {
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6 p-6">
@@ -133,6 +135,8 @@ export default function MyList() {
             <MovieCard
               key={item.id}
               item={item}
+              isInWatchlist={true}
+              onWatchlistChange={fetchWatchlist}
               onUpdate={fetchWatchlist}
             />
           ))}

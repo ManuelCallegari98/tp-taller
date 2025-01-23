@@ -1,6 +1,6 @@
 // src/components/MediaList.tsx
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,130 +24,147 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { Movie } from "@/types/movie";
 import { MovieCardItem } from "@/types/movieCard";
 import MovieCard from "./MovieCard";
+import { sessionService } from "@/services/sessionService";
 
 interface MediaListProps {
   type: "movie" | "series";
   title: string;
 }
 
+interface SearchFilters {
+  searchTerm: string;
+  genre: string;
+}
+
 export default function MediaList({ type, title }: MediaListProps) {
+  // Estados principales
   const [allItems, setAllItems] = useState<Movie[]>([]);
   const [filteredItems, setFilteredItems] = useState<Movie[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("all");
-  const [genres, setGenres] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Estados de búsqueda y filtros
+  const [filters, setFilters] = useState<SearchFilters>({
+    searchTerm: "",
+    genre: "all"
+  });
+  const debouncedSearch = useDebounce(filters.searchTerm, 500);
+
+  // Estados de diálogo
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newItemTitle, setNewItemTitle] = useState("");
+  const [isAddingItem, setIsAddingItem] = useState(false);
+
+  // Estados de usuario y watchlist
+  const user = sessionService.getSession();
+  const [watchlist, setWatchlist] = useState<number[]>([]);
+
+  // Hooks
   const { toast } = useToast();
-  
-  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  // Cargar todas las películas/series al inicio
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch('http://localhost:4000/api/movies');
-        if (!response.ok) {
-          throw new Error('Error fetching items');
-        }
-        const data = await response.json();
-        
-        // Filtrar por tipo (movie o series)
-        const typeFilteredItems = data.filter((item: Movie) => item.type === type);
-        setAllItems(typeFilteredItems);
-        setFilteredItems(typeFilteredItems);
-        
-        // Extraer géneros únicos
-        const uniqueGenres = Array.from(new Set(
-          typeFilteredItems.flatMap((item: Movie) => 
-            item.genre.split(',').map((g: string) => g.trim())
-          )
-        )).sort() as string[];
-        setGenres(uniqueGenres);
-      } catch (error) {
-        console.error('Error:', error);
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar los items",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Géneros únicos memoizados
+  const genres = useMemo(() => {
+    const uniqueGenres = Array.from(new Set(
+      allItems.flatMap(item =>
+        item.genre.split(',').map(g => g.trim())
+      )
+    )).sort();
+    return uniqueGenres;
+  }, [allItems]);
 
-    fetchItems();
-  }, [type, toast]);
-
-  // Aplicar filtros cuando cambie la búsqueda o el género
-  useEffect(() => {
-    let filtered = allItems;
-
-    // Filtrar por término de búsqueda
-    if (debouncedSearch) {
-      filtered = filtered.filter(item =>
-        item.title.toLowerCase().includes(debouncedSearch.toLowerCase())
-      );
-    }
-
-    // Filtrar por género
-    if (selectedGenre && selectedGenre !== "all") {
-      filtered = filtered.filter(item =>
-        item.genre.toLowerCase().includes(selectedGenre.toLowerCase())
-      );
-    }
-
-    setFilteredItems(filtered);
-  }, [debouncedSearch, selectedGenre, allItems]);
-
-  // Función para agregar nueva película/serie
-  const handleAddItem = async () => {
-    if (!newItemTitle.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un título",
-        variant: "destructive",
-      });
+  // Funciones de fetch
+  const fetchWatchlist = async () => {
+    if (!user?.id) {
+      setWatchlist([]);
       return;
     }
 
     try {
-      const response = await fetch(`http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`);
-      if (!response.ok) {
-        throw new Error('Error al buscar el título');
-      }
+      const response = await fetch(`http://localhost:4000/api/watchlist/${user.id}`);
+      if (!response.ok) throw new Error('Error al obtener watchlist');
+      const data = await response.json();
+      setWatchlist(data.map((item: any) => item.movieId));
+    } catch (error) {
+      console.error('Error:', error);
+      setWatchlist([]);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('http://localhost:4000/api/movies');
+      if (!response.ok) throw new Error('Error al cargar items');
 
       const data = await response.json();
-      setIsAddDialogOpen(false);
-      setNewItemTitle("");
-
-      // Actualizar la lista completa
-      const updatedResponse = await fetch('http://localhost:4000/api/movies');
-      if (!updatedResponse.ok) {
-        throw new Error('Error actualizando la lista');
-      }
-      const updatedData = await updatedResponse.json();
-      const typeFilteredItems = updatedData.filter((item: Movie) => item.type === type);
+      const typeFilteredItems = data.filter((item: Movie) => item.type === type);
       setAllItems(typeFilteredItems);
-
-      toast({
-        title: "Éxito",
-        description: "Item agregado correctamente",
-      });
+      setFilteredItems(typeFilteredItems);
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error desconocido",
+        description: "No se pudieron cargar los items",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Efectos
+  useEffect(() => {
+    fetchItems();
+  }, [type]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchWatchlist();
+    }
+  }, [user?.id]);
+
+  // Efecto de búsqueda y filtrado
+  useEffect(() => {
+    setIsSearching(true);
+    const applyFilters = () => {
+      let filtered = [...allItems];
+
+      if (debouncedSearch) {
+        const searchTerms = debouncedSearch.toLowerCase().split(' ');
+        filtered = filtered.filter(item => {
+          const searchableText = [
+            item.title,
+            item.director,
+            item.actors,
+            item.genre,
+            item.plot || '',
+            item.year || ''
+          ].join(' ').toLowerCase();
+
+          return searchTerms.every(term => searchableText.includes(term));
+        });
+      }
+
+      if (filters.genre !== "all") {
+        const genreLower = filters.genre.toLowerCase();
+        filtered = filtered.filter(item =>
+          item.genre.toLowerCase().split(',')
+            .map(g => g.trim())
+            .some(g => g === genreLower)
+        );
+      }
+
+      setFilteredItems(filtered);
+      setIsSearching(false);
+    };
+
+    const timeoutId = setTimeout(applyFilters, 100);
+    return () => clearTimeout(timeoutId);
+  }, [debouncedSearch, filters.genre, allItems]);
+
+  // Transformación de datos
   const transformToCardItem = (movie: Movie): MovieCardItem => ({
-    id: movie.id || 0,
+    id: movie.id ?? 0,
     title: movie.title,
     type: movie.type,
     genre: movie.genre,
@@ -168,6 +184,46 @@ export default function MediaList({ type, title }: MediaListProps) {
     ratings: movie.ratings
   });
 
+  // Manejadores de eventos
+  const handleAddItem = async () => {
+    if (!newItemTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Por favor ingresa un título",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsAddingItem(true);
+      const response = await fetch(
+        `http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`
+      );
+
+      if (!response.ok) throw new Error('Error al buscar el título');
+
+      setIsAddDialogOpen(false);
+      setNewItemTitle("");
+      await fetchItems();
+
+      toast({
+        title: "Éxito",
+        description: "Item agregado correctamente",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error desconocido",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingItem(false);
+    }
+  };
+
+  // Renderizado condicional
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
@@ -188,21 +244,22 @@ export default function MediaList({ type, title }: MediaListProps) {
     <div className="space-y-6 p-6">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <h1 className="text-2xl font-bold">{title}</h1>
-        <div className="flex gap-4 w-full md:w-auto">
-          <div className="relative flex-1 md:w-[300px]">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <div className="relative w-full md:min-w-[300px] md:max-w-[500px]">
+            <Search className={`absolute left-2 top-2.5 h-4 w-4 ${isSearching ? 'animate-spin text-primary' : 'text-muted-foreground'
+              }`} />
             <Input
               placeholder={`Buscar ${type === 'movie' ? 'películas' : 'series'}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
+              value={filters.searchTerm}
+              onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+              className="pl-8 w-full"
             />
           </div>
           <Select
-            value={selectedGenre}
-            onValueChange={setSelectedGenre}
+            value={filters.genre}
+            onValueChange={(value) => setFilters(prev => ({ ...prev, genre: value }))}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full md:w-[180px]">
               <SelectValue placeholder="Filtrar por género" />
             </SelectTrigger>
             <SelectContent>
@@ -234,8 +291,21 @@ export default function MediaList({ type, title }: MediaListProps) {
                     placeholder="Ingresa el título..."
                     value={newItemTitle}
                     onChange={(e) => setNewItemTitle(e.target.value)}
+                    disabled={isAddingItem}
                   />
-                  <Button onClick={handleAddItem}>Buscar y Agregar</Button>
+                  <Button
+                    onClick={handleAddItem}
+                    disabled={isAddingItem}
+                  >
+                    {isAddingItem ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Buscando...
+                      </>
+                    ) : (
+                      'Buscar y Agregar'
+                    )}
+                  </Button>
                 </div>
               </div>
             </DialogContent>
@@ -245,22 +315,21 @@ export default function MediaList({ type, title }: MediaListProps) {
 
       {filteredItems.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
-          No se encontraron {type === 'movie' ? 'películas' : 'series'}
+          <p>No se encontraron {type === 'movie' ? 'películas' : 'series'}</p>
+          {filters.searchTerm && (
+            <p className="mt-2">
+              Prueba con otros términos de búsqueda o ajusta los filtros
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredItems.map(item => (
             <MovieCard
-              key={item.imdbID}
+              key={item.id ?? ''}
               item={transformToCardItem(item)}
-              onUpdate={async () => {
-                const response = await fetch('http://localhost:4000/api/movies');
-                if (response.ok) {
-                  const data = await response.json();
-                  const typeFilteredItems = data.filter((item: Movie) => item.type === type);
-                  setAllItems(typeFilteredItems);
-                }
-              }}
+              isInWatchlist={watchlist.includes(item.id ?? -1)}
+              onWatchlistChange={fetchWatchlist}
             />
           ))}
         </div>

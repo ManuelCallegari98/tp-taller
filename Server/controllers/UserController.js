@@ -1,28 +1,30 @@
-// controllers/UserController.js
 import UserService from '../Services/UserService.js';
+import logger from '../config/logger.js';
 
 export const createUser = async (req, res) => {
     try {
-        console.log('Datos recibidos:', {
+        logger.info('Intento de creación de usuario', {
             username: req.body.username,
             fullName: req.body.fullName,
-            // No logueamos la contraseña por seguridad
+            action: 'CREATE_USER',
             hasProfilePicture: !!req.body.profile_picture
         });
 
         const user = await UserService.createUser(req.body);
-        console.log('Usuario creado exitosamente:', {
-            id: user.id,
+        logger.info('Usuario creado exitosamente', {
+            userId: user.id,
             username: user.username,
-            fullName: user.fullName,
+            action: 'USER_CREATED',
             isAdmin: user.isAdmin
         });
 
         res.status(201).json(user);
     } catch (error) {
-        console.error('Error al crear usuario:', {
-            message: error.message,
-            stack: error.stack
+        logger.error('Error al crear usuario', {
+            error: error.message,
+            stack: error.stack,
+            action: 'CREATE_USER_ERROR',
+            username: req.body.username
         });
         res.status(500).json({ error: error.message });
     }
@@ -30,10 +32,19 @@ export const createUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
     try {
-        const { username, password } = req.body;
-        const user = await UserService.login(username, password);
+        const { username } = req.body;
+        logger.info('Intento de inicio de sesión', {
+            username,
+            action: 'LOGIN_ATTEMPT'
+        });
+
+        const user = await UserService.login(username, req.body.password);
+        logger.info('Inicio de sesión exitoso', {
+            userId: user.id,
+            username: user.username,
+            action: 'LOGIN_SUCCESS'
+        });
         
-        // Solo enviamos la información necesaria
         res.json({ 
             id: user.id,
             username: user.username,
@@ -42,15 +53,34 @@ export const loginUser = async (req, res) => {
             profilePicture: user.profilePicture,
         });
     } catch (error) {
+        logger.error('Error en inicio de sesión', {
+            username,
+            error: error.message,
+            action: 'LOGIN_ERROR'
+        });
         res.status(401).json({ error: error.message });
     }
 };
 
 export const getUsersForAdmin = async (req, res) => {
     try {
+        logger.info('Solicitud de lista de usuarios para admin', {
+            action: 'GET_USERS_ADMIN'
+        });
+
         const users = await UserService.getUsersForAdmin();
-        res.status(200).json(users);
+        logger.info('Lista de usuarios recuperada exitosamente', {
+            action: 'GET_USERS_ADMIN_SUCCESS',
+            userCount: users.length
+        });
+
+        res.json(users);
     } catch (error) {
+        logger.error('Error al obtener lista de usuarios', {
+            error: error.message,
+            stack: error.stack,
+            action: 'GET_USERS_ADMIN_ERROR'
+        });
         res.status(500).json({ error: error.message });
     }
 };
@@ -58,88 +88,76 @@ export const getUsersForAdmin = async (req, res) => {
 export const deleteUser = async (req, res) => {
     try {
         const { userId } = req.params;
+        logger.info('Intento de eliminación de usuario', {
+            userId,
+            action: 'DELETE_USER'
+        });
+
         await UserService.deleteUser(userId);
-        res.status(204).send();
+        logger.info('Usuario eliminado exitosamente', {
+            userId,
+            action: 'DELETE_USER_SUCCESS'
+        });
+
+        res.json({ message: 'Usuario eliminado exitosamente' });
     } catch (error) {
+        logger.error('Error al eliminar usuario', {
+            userId: req.params.userId,
+            error: error.message,
+            stack: error.stack,
+            action: 'DELETE_USER_ERROR'
+        });
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export const updateUser = async (req, res) => {
     try {
         const { userId } = req.params;
-        const { id, isAdmin, password, username, fullName, profilePicture } = req.body;
-        
-        // Logs seguros (sin mostrar contraseña)
-        console.log('Datos recibidos:', {
+        logger.info('Intento de actualización de usuario', {
             userId,
-            username,
-            fullName,
-            hasPassword: !!password,
-            hasProfilePicture: !!profilePicture,
-            requestingUserId: id,
-            isAdmin
+            action: 'UPDATE_USER',
+            updatedFields: Object.keys(req.body).filter(key => key !== 'password')
         });
 
-        // Verificar si el usuario es admin o si está editando su propio perfil
-        if (isAdmin || id === parseInt(userId, 10)) {
-            console.log('Usuario tiene permisos para editar');
-            
-            // Preparar datos de actualización (similar a createUser)
-            const updateData = {
-                username,
-                fullName,
-                profilePicture
-            };
+        const updatedUser = await UserService.updateUser(userId, req.body);
+        logger.info('Usuario actualizado exitosamente', {
+            userId,
+            username: updatedUser.username,
+            action: 'UPDATE_USER_SUCCESS'
+        });
 
-            // Solo incluir password si se proporcionó uno nuevo
-            if (password) {
-                updateData.password = password;
-            }
-
-            const updatedUser = await UserService.updateUser(userId, updateData);
-            
-            // Log del resultado (sin datos sensibles)
-            console.log('Usuario actualizado exitosamente:', {
-                id: updatedUser.id,
-                username: updatedUser.username,
-                fullName: updatedUser.fullName,
-                isAdmin: updatedUser.isAdmin,
-                hasProfilePicture: !!updatedUser.profilePicture
-            });
-
-            // Enviar respuesta sin datos sensibles
-            res.status(200).json({
-                id: updatedUser.id,
-                username: updatedUser.username,
-                fullName: updatedUser.fullName,
-                isAdmin: updatedUser.isAdmin,
-                profilePicture: updatedUser.profilePicture
-            });
-        } else {
-            console.log('Usuario NO tiene permisos:', { 
-                userIdToEdit: userId, 
-                requestingUserId: id, 
-                isAdmin 
-            });
-            res.status(403).json({ error: 'No tienes permiso para editar este perfil' });
-        }
+        res.json(updatedUser);
     } catch (error) {
-        console.error('Error en updateUser:', {
-            message: error.message,
-            stack: error.stack
+        logger.error('Error al actualizar usuario', {
+            userId: req.params.userId,
+            error: error.message,
+            stack: error.stack,
+            action: 'UPDATE_USER_ERROR'
         });
         res.status(500).json({ error: error.message });
     }
 };
 
-
 export const getUserCount = async (req, res) => {
     try {
+        logger.info('Solicitud de conteo de usuarios', {
+            action: 'GET_USER_COUNT'
+        });
+
         const count = await UserService.getUserCount();
+        logger.info('Conteo de usuarios completado', {
+            action: 'GET_USER_COUNT_SUCCESS',
+            count
+        });
+
         res.json({ count });
     } catch (error) {
+        logger.error('Error al obtener conteo de usuarios', {
+            error: error.message,
+            stack: error.stack,
+            action: 'GET_USER_COUNT_ERROR'
+        });
         res.status(500).json({ error: error.message });
     }
 };
