@@ -33,6 +33,11 @@ const MovieCard = ({ item, isInWatchlist: initialIsInWatchlist, onWatchlistChang
   const [comment, setComment] = useState("");
   const [isInWatchlist, setIsInWatchlist] = useState(initialIsInWatchlist);
 
+
+  useEffect(() => {
+    setIsInWatchlist(initialIsInWatchlist);
+  }, [initialIsInWatchlist]);
+
   // Eliminar el useEffect que verifica watchlist
 
   const handleWatchlistToggle = async () => {
@@ -46,41 +51,46 @@ const MovieCard = ({ item, isInWatchlist: initialIsInWatchlist, onWatchlistChang
     }
 
     try {
+      let response;
       if (isInWatchlist) {
-        const response = await fetch(`http://localhost:4000/api/watchlist/${user.id}/${item.id}`, {
+        // Eliminar de la watchlist
+        response = await fetch(`http://localhost:4000/api/watchlist/${user.id}/${item.id}`, {
           method: 'DELETE',
         });
-        if (!response.ok) throw new Error('Error al eliminar de la watchlist');
       } else {
-        const response = await fetch(`http://localhost:4000/api/watchlist`, {
+        // Agregar a la watchlist
+        response = await fetch(`http://localhost:4000/api/watchlist`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ userId: user.id, movieId: item.id }),
         });
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Error al agregar a la watchlist');
-        }
+      }
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al actualizar watchlist');
       }
 
       setIsInWatchlist(!isInWatchlist);
       onWatchlistChange();
-
+      
       toast({
         title: "Éxito",
-        description: isInWatchlist ? "Eliminado de tu lista" : "Agregado a tu lista",
+        description: isInWatchlist 
+          ? "Eliminado de tu lista" 
+          : "Agregado a tu lista",
       });
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: error.message || "Error al actualizar tu lista",
+        description: error instanceof Error ? error.message : "Error al actualizar tu lista",
         variant: "destructive",
       });
     }
   };
-
 
   const handleRating = async () => {
     if (!user) {
@@ -162,12 +172,13 @@ const MovieCard = ({ item, isInWatchlist: initialIsInWatchlist, onWatchlistChang
           </div>
           <div className="flex gap-2">
           <Button
-          variant="outline"
+          variant="secondary"
           size="icon"
           onClick={handleWatchlistToggle}
+          className="bg-black/50 hover:bg-black/70"
         >
           {isInWatchlist ? (
-            <Check className="h-4 w-4 text-green-500" />
+            <Check className="h-4 w-4" />
           ) : (
             <Plus className="h-4 w-4" />
           )}

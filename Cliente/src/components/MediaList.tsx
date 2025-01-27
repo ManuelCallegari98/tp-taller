@@ -42,6 +42,7 @@ export default function MediaList({ type, title }: MediaListProps) {
   const [filteredItems, setFilteredItems] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
+  const [watchlistItems, setWatchlistItems] = useState<number[]>([]);
 
   // Estados de búsqueda y filtros
   const [filters, setFilters] = useState<SearchFilters>({
@@ -74,19 +75,16 @@ export default function MediaList({ type, title }: MediaListProps) {
 
   // Funciones de fetch
   const fetchWatchlist = async () => {
-    if (!user?.id) {
-      setWatchlist([]);
-      return;
-    }
-
     try {
+      if (!user?.id) return;
+      
       const response = await fetch(`http://localhost:4000/api/watchlist/${user.id}`);
-      if (!response.ok) throw new Error('Error al obtener watchlist');
-      const data = await response.json();
-      setWatchlist(data.map((item: any) => item.movieId));
+      if (!response.ok) throw new Error('Error al obtener la watchlist');
+      
+      const watchlist = await response.json();
+      setWatchlistItems(watchlist.map((item: any) => Number(item.movieId)));
     } catch (error) {
-      console.error('Error:', error);
-      setWatchlist([]);
+      console.error('Error al obtener watchlist:', error);
     }
   };
 
@@ -162,6 +160,10 @@ export default function MediaList({ type, title }: MediaListProps) {
     return () => clearTimeout(timeoutId);
   }, [debouncedSearch, filters.genre, allItems]);
 
+  const handleWatchlistChange = () => {
+    fetchWatchlist();
+  };
+
   // Transformación de datos
   const transformToCardItem = (movie: Movie): MovieCardItem => ({
     id: movie.id ?? 0,
@@ -197,6 +199,7 @@ export default function MediaList({ type, title }: MediaListProps) {
 
     try {
       setIsAddingItem(true);
+      console.log("Buscando: ", `http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`, newItemTitle, type);
       const response = await fetch(
         `http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`
       );
@@ -328,8 +331,8 @@ export default function MediaList({ type, title }: MediaListProps) {
             <MovieCard
               key={item.id ?? ''}
               item={transformToCardItem(item)}
-              isInWatchlist={watchlist.includes(item.id ?? -1)}
-              onWatchlistChange={fetchWatchlist}
+              isInWatchlist={watchlistItems.includes(Number(item.id ?? 0))}
+              onWatchlistChange={handleWatchlistChange}
             />
           ))}
         </div>

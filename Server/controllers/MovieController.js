@@ -62,8 +62,8 @@ export const getMoviesByType = async (req, res) => {
 
 export const searchMovies = async (req, res) => {
     try {
-        const { query } = req.query;
-        
+        const { query, type } = req.query;
+        console.log(query);
         if (!query) {
             logger.warn('Intento de búsqueda sin término de búsqueda', {
                 action: 'SEARCH_MOVIES_MISSING_PARAM'
@@ -76,7 +76,7 @@ export const searchMovies = async (req, res) => {
             searchQuery: query
         });
 
-        const movies = await MovieService.searchMovies(query);
+        const movies = await MovieService.searchMovies(query,type);
         logger.info('Búsqueda de películas completada', {
             action: 'SEARCH_MOVIES_SUCCESS',
             searchQuery: query,
