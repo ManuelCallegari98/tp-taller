@@ -184,8 +184,8 @@ classDiagram
     }
 
     User "1" --o "*" Rating : tiene
-    Movie "1" --o "*" Rating : recibe
-    User "1" --o "*" WatchList : tiene
-    Movie "1" --o "*" WatchList : incluye
+    Movie "*" --o "*" Rating : recibe
+    User "1" --o "1" WatchList : tiene
+    Movie "*" --o "*" WatchList : incluye
     User "*" -- "*" Movie : califica
     User "*" -- "*" Movie : ve
