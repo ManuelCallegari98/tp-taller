@@ -183,9 +183,9 @@ classDiagram
         +Date updatedAt
     }
 
-    User "1" --o "*" Rating : has
-    Movie "1" --o "*" Rating : receives
-    User "1" --o "*" WatchList : owns
-    Movie "1" --o "*" WatchList : included_in
-    User "*" -- "*" Movie : rates
-    User "*" -- "*" Movie : watches
+    User "1" --o "*" Rating : tiene
+    Movie "1" --o "*" Rating : recibe
+    User "1" --o "*" WatchList : tiene
+    Movie "1" --o "*" WatchList : incluye
+    User "*" -- "*" Movie : califica
+    User "*" -- "*" Movie : ve
