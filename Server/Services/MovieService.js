@@ -2,8 +2,6 @@
 import MovieRepository from '../repositories/MovieRepository.js';
 import axios from 'axios';
 
-const OMDB_API_KEY = "91ca3eb4";
-
 class MovieService {
     async getAllMovies() {
         try {
@@ -43,7 +41,7 @@ class MovieService {
             console.log("Buscando en OMDB:", query, type);
             const formattedQuery = query.trim().replace(/ /g, '+');
             const omdbResponse = await axios.get(
-                `http://www.omdbapi.com/?t=${formattedQuery}&type=${type}&apikey=${OMDB_API_KEY}`
+                `http://www.omdbapi.com/?t=${formattedQuery}&type=${type}&apikey=${process.env.OMDB_API_KEY}`
             );
 
             if (omdbResponse.data.Response === "True") {

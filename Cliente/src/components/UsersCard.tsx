@@ -1,13 +1,24 @@
 'use client';
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DrawerDialogDemo } from '@/components/EditUser';
 import { UserCircle2 } from 'lucide-react';
 
-export default function UserCard({ user, onUserUpdated }) {
+interface User {
+  username: string;
+  fullName: string;
+  profilePicture?: string;
+  isAdmin: boolean;
+}
+
+interface UserCardProps {
+  user: User;
+  onUserUpdated: () => void;
+}
+
+export default function UserCard({ user, onUserUpdated }: UserCardProps) {
   const activeUserString = sessionStorage.getItem('user');
-  const activeUser = activeUserString ? JSON.parse(activeUserString) : null;
+  const activeUser: User | null = activeUserString ? JSON.parse(activeUserString) : null;
   const isAdmin = activeUser?.isAdmin;
 
   return (

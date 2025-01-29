@@ -39,16 +39,14 @@ class UserService {
         return await UserRepository.delete(userId);
     }
     
-    /*async updateUser(userId, userData) {
-        return await UserRepository.update(userId, userData);
-    }*/
 
         async updateUser(userId, userData) {
+            const { isAdmin, ...safeUserData } = userData;
             console.log('UserService.updateUser - Datos recibidos:', {
                 userId,
-                userData
+                safeUserData
             });
-            return await UserRepository.update(userId, userData);
+            return await UserRepository.update(userId, safeUserData);
         }    
     // UserService.js
     async getUserCount() {

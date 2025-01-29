@@ -68,7 +68,6 @@ export function DrawerDialogDemo({ user, onUserUpdated }) {
           profilePicture: formData.profilePicture,
           password: formData.password || undefined, // Solo enviamos la contraseña si se modificó
           id: activeUser.id,
-          isAdmin: activeUser.isAdmin
         })
       });
 
