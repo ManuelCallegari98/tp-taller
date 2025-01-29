@@ -62,7 +62,7 @@ npm run dev
 4. **Calificaciones y Comentarios**
    - Califica películas y series de 1 a 5 estrellas
    - Agrega comentarios a tus calificaciones
-   - Ve las calificaciones y comentarios de otros usuarios
+   - Ve las calificaciones y comentarios que realizadas por ese usuario
 
 ## 🛠️ Tecnologías Utilizadas
 
