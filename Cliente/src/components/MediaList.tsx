@@ -188,31 +188,30 @@ export default function MediaList({ type, title }: MediaListProps) {
 
   // Manejadores de eventos
   const handleAddItem = async () => {
-    if (!newItemTitle.trim()) {
-      toast({
-        title: "Error",
-        description: "Por favor ingresa un título",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsAddingItem(true);
       console.log("Buscando: ", `http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`, newItemTitle, type);
       const response = await fetch(
         `http://localhost:4000/api/movies/search?query=${encodeURIComponent(newItemTitle)}&type=${type}`
       );
-
+  
       if (!response.ok) throw new Error('Error al buscar el título');
-
+      
+      const data = await response.json();
+      
+      // Verifica si se encontró alguna película
+      if (!data || data.length === 0) {
+        throw new Error('No se encontró la película');
+      }
+  
       setIsAddDialogOpen(false);
       setNewItemTitle("");
       await fetchItems();
-
+  
       toast({
         title: "Éxito",
-        description: "Item agregado correctamente",
+        description: "La película fue agregada exitosamente",
+        variant: "default",
       });
     } catch (error) {
       console.error('Error:', error);
