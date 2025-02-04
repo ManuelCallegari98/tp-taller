@@ -1,8 +1,13 @@
-// Services/MovieService.js
 import MovieRepository from '../repositories/MovieRepository.js';
+import { MovieAPIFactory } from './apis/MovieAPIFactory.js';
 import axios from 'axios';
 
+
 class MovieService {
+    constructor() {
+        this.movieAPI = MovieAPIFactory.getMovieAPI();
+    }
+    
     async getAllMovies() {
         try {
             const movies = await MovieRepository.findAll();
@@ -25,40 +30,32 @@ class MovieService {
 
     async searchMovies(query, type) {
         try {
-            // Validar el tipo
-            if (!['movie', 'series'].includes(type)) {
-                throw new Error(`Invalid type: ${type}. Must be "movie" or "series"`);
-            }
-
-            // Buscar primero en la base de datos local
-            const localMovies = await MovieRepository.findByTitle(query, type);
-
-            if (localMovies.length > 0) {
-                return this.transformMovie(localMovies);
-            }
-
-            // Si no hay resultados locales, buscar en OMDB
-            console.log("Buscando en OMDB:", query, type);
-            const formattedQuery = query.trim().replace(/ /g, '+');
-            const omdbResponse = await axios.get(
-                `http://www.omdbapi.com/?t=${formattedQuery}&type=${type}&apikey=${process.env.OMDB_API_KEY}`
-            );
-
-            if (omdbResponse.data.Response === "True") {
-                // Pasar el tipo solicitado a saveMovieFromAPI
-                const savedMovie = await this.saveMovieFromAPI(omdbResponse.data, type);
-                return [this.transformMovie(savedMovie)];
-            }
-
-            return [];
+          // Validar el tipo recibido
+          if (!['movie', 'series'].includes(type)) {
+            throw new Error(`Invalid type: ${type}. Must be "movie" or "series"`);
+          }
+    
+          // Primero buscar en la base de datos local
+          const localMovies = await MovieRepository.findByTitle(query, type);
+          if (localMovies.length > 0) {
+            return this.transformMovie(localMovies);
+          }
+    
+          // Si no hay resultados locales, consumir la API externa
+          console.log("Buscando en API externa (OMDB):", query, type);
+          const movieData = await this.movieAPI.searchMovie(query, type);
+    
+          if (movieData.Response === "True") {
+            const savedMovie = await this.saveMovieFromAPI(movieData, type);
+            return [this.transformMovie(savedMovie)];
+          }
+    
+          return [];
         } catch (error) {
-            console.error('Error searching movies:', error);
-            if (error.response) {
-                console.error('OMDB API Error:', error.response.data);
-            }
-            throw new Error(`Error al buscar el título: ${error.message}`);
+          console.error('Error searching movies:', error);
+          throw new Error(`Error al buscar el título: ${error.message}`);
         }
-    }
+      }
 
 
     async saveMovieFromAPI(movieData, requestedType) {
