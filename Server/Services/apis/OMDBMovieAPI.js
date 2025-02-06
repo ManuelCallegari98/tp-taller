@@ -14,13 +14,35 @@ export class OMDBMovieAPI extends IMovieAPI {
     const response = await axios.get(
       `${this.baseUrl}?t=${formattedQuery}&type=${type}&apikey=${this.apiKey}`
     );
-    return response.data;
+    if (response.data.Response === "True") {
+      return this._transformToMovieModel(response.data);
+    }
+    return null;
   }
 
-  async getMovieDetails(id) {
-    const response = await axios.get(
-      `${this.baseUrl}?i=${id}&apikey=${this.apiKey}`
-    );
-    return response.data;
+  _transformToMovieModel(omdbData) {
+    return {
+      title: omdbData.Title,
+      year: omdbData.Year,
+      rated: omdbData.Rated,
+      released: omdbData.Released,
+      runtime: omdbData.Runtime,
+      genre: omdbData.Genre,
+      director: omdbData.Director,
+      writer: omdbData.Writer,
+      actors: omdbData.Actors,
+      plot: omdbData.Plot,
+      language: omdbData.Language,
+      country: omdbData.Country,
+      awards: omdbData.Awards,
+      poster: omdbData.Poster,
+      ratings: omdbData.Ratings,
+      metascore: omdbData.Metascore,
+      imdbRating: omdbData.imdbRating,
+      imdbVotes: omdbData.imdbVotes,
+      imdbID: omdbData.imdbID,
+      type: omdbData.Type,
+      boxOffice: omdbData.BoxOffice
+    };
   }
 }
