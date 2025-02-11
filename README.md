@@ -27,7 +27,7 @@ DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/tangoflix
 PORT=4000
 OMDB_API_KEY=tu_api_key_aqui
 
-# Iniciar el servidor en modo desarrollo (en el directorio /server)
+# Iniciar el servidor en modo desarrollo (en el directorio /Server)
 node index.js
 ```
 
@@ -39,7 +39,7 @@ cd Cliente
 # Instalar dependencias
 npm install
 
-# Iniciar el cliente en modo desarrollo (en el directorio /cliente)
+# Iniciar el cliente en modo desarrollo (en el directorio /Cliente)
 npm run dev
 ```
 
@@ -100,26 +100,21 @@ npm run dev
    - Mediador entre controllers y repositories
    - Implementado en `/Services` para cada dominio
 
-4. **Dependency Injection**
-   - Inyección de dependencias en servicios y controllers
-   - Mejora la testabilidad y mantenibilidad
-   - Facilita el cambio de implementaciones
-
-5. **Singleton Pattern**
+4. **Singleton Pattern**
    - Utilizado en la configuración de la base de datos
    - Implementado en la conexión a PostgreSQL
    - Asegura una única instancia de conexión
 
-6. **Factory Pattern**
+5. **Factory Pattern**
    - Creación de instancias de modelos
    - Utilizado en la inicialización de modelos Sequelize
 
-7. **Middleware Pattern**
+6. **Middleware Pattern**
    - Procesamiento de requests en cadena
    - Manejo de autenticación y logging
    - Validación de datos de entrada
 
-8. **Observer Pattern**
+7. **Observer Pattern**
    - Sistema de logging con Winston
    - Monitoreo de eventos y errores
    - Rotación diaria de logs
