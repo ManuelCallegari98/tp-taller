@@ -46,6 +46,23 @@ class RatingService {
         }
         return await RatingRepository.update(ratingId, { comment });
     }
+
+
+    async deleteRating(ratingId) {
+        const parsedRatingId = parseInt(ratingId);
+        
+        if (isNaN(parsedRatingId)) {
+            throw new Error('Invalid rating ID');
+        }
+
+        const result = await RatingRepository.deleteRating(parsedRatingId);
+        
+        if (result === 0) {
+            throw new Error('Rating not found');
+        }
+
+        return result;
+    }
 }
 
 export default new RatingService();

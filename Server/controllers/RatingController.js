@@ -161,3 +161,38 @@ export const editComment = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const deleteRating = async (req, res) => {
+    try {
+        const { ratingId } = req.params;
+
+        if (!ratingId) {
+            logger.warn('Intento de eliminar calificación sin ID', {
+                action: 'DELETE_RATING_MISSING_PARAM'
+            });
+            return res.status(400).json({ message: 'Rating ID is required' });
+        }
+
+        logger.info('Intento de eliminar calificación', {
+            action: 'DELETE_RATING',
+            ratingId
+        });
+
+        await RatingService.deleteRating(ratingId);
+        
+        logger.info('Calificación eliminada exitosamente', {
+            action: 'DELETE_RATING_SUCCESS',
+            ratingId
+        });
+
+        res.status(204).send();
+    } catch (error) {
+        logger.error('Error al eliminar calificación', {
+            error: error.message,
+            stack: error.stack,
+            action: 'DELETE_RATING_ERROR',
+            ratingId: req.params.ratingId
+        });
+        res.status(500).json({ error: error.message });
+    }
+};

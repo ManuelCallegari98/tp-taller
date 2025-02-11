@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import { sessionService } from "@/services/sessionService";
 import { User } from "@/types/user";
 import { Loader2 } from 'lucide-react';
+import { Trash } from 'lucide-react';
 import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from '@/components/ui/button';
 
 interface Rating {
   id: number;
@@ -21,8 +24,55 @@ interface Rating {
 }
 
 function RatedMovieCard({ rating }: { rating: Rating }) {
+  const [watchlistItems, setWatchlistItems] = useState<number[]>([]);
+  const [sessionUser, setSessionUser] = useState<User | null>(null);
+  const { toast } = useToast();
+
+
+  useEffect(() => {
+    const userData = sessionService.getSession() as User | null;
+    if (userData) {
+      setSessionUser(userData);
+    }
+  }, []);
+
+  const handleDeleteRating = async () => {
+    try {
+      const response = await fetch(`http://localhost:4000/api/ratings/${rating.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Error al eliminar la calificación');
+      
+      toast({
+        title: "Éxito",
+        description: "Calificación eliminada exitosamente",
+      });
+
+      // Recargar la página para actualizar la lista
+      window.location.reload();
+    } catch (error) {
+      console.error('Error al eliminar la calificación:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la calificación",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <Card className="overflow-hidden bg-gray-800/40 hover:bg-gray-800/60 transition">
+    <Card className="overflow-hidden bg-gray-800/40 hover:bg-gray-800/60 transition relative">
+      <div className="absolute top-2 right-2">
+      <Button 
+          onClick={handleDeleteRating}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
       <div className="flex gap-4 p-4">
         <img 
           src={rating.Movie.poster} 

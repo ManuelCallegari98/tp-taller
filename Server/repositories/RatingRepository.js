@@ -74,6 +74,19 @@ class RatingRepository extends BaseRepository {
         );
         return existingRating;
     }
+
+    async deleteRating(ratingId) {
+        console.log('Eliminando rating:', ratingId);
+        
+        const result = await this.model.destroy({
+            where: { 
+                id: ratingId
+            }
+        });
+        
+        console.log('Resultado de eliminación:', result);
+        return result;
+    }
 }
 
 export default new RatingRepository();

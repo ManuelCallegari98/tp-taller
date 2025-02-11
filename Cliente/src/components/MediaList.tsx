@@ -58,7 +58,7 @@ export default function MediaList({ type, title }: MediaListProps) {
 
   // Estados de usuario y watchlist
   const user = sessionService.getSession();
-  const [watchlist, setWatchlist] = useState<number[]>([]);
+
 
   // Hooks
   const { toast } = useToast();
