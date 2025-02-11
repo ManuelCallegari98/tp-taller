@@ -11,6 +11,7 @@ export class OMDBMovieAPI extends IMovieAPI {
 
   async searchMovie(query, type) {
     const formattedQuery = query.trim().replace(/ /g, '+');
+    console.log('formatedquery:',formattedQuery)
     const response = await axios.get(
       `${this.baseUrl}?t=${formattedQuery}&type=${type}&apikey=${this.apiKey}`
     );

@@ -44,8 +44,8 @@ class MovieService {
           // Si no hay resultados locales, consumir la API externa
           console.log("Buscando en API externa (OMDB):", query, type);
           const movieData = await this.movieAPI.searchMovie(query, type);
-    
-          if (movieData.Response === "True") {
+          console.log('moviedata:',movieData)
+          if (movieData.Response !== null) {
             const savedMovie = await this.saveMovieFromAPI(movieData, type);
             return [this.transformMovie(savedMovie)];
           }
@@ -61,39 +61,39 @@ class MovieService {
     async saveMovieFromAPI(movieData, requestedType) {
         try {
             // Validar que tenemos los datos necesarios
-            if (!movieData || !movieData.Title || !movieData.Type) {
+            if (!movieData || !movieData.title || !movieData.type) {
                 throw new Error('Invalid movie data from OMDB API');
             }
 
             // Validar el tipo antes de guardar
-            const movieType = movieData.Type.toLowerCase();
+            const movieType = movieData.type;
             if (movieType !== requestedType) {
                 throw new Error(`Type mismatch: Expected ${requestedType} but got ${movieType}`);
             }
 
             // Preparar los datos para guardar
             const movieToSave = {
-                title: movieData.Title,
-                year: movieData.Year || 'N/A',
-                rated: movieData.Rated || 'N/A',
-                released: movieData.Released || 'N/A',
-                runtime: movieData.Runtime || 'N/A',
-                genre: movieData.Genre || 'N/A',
-                director: movieData.Director || 'N/A',
-                writer: movieData.Writer || 'N/A',
-                actors: movieData.Actors || 'N/A',
-                plot: movieData.Plot || 'N/A',
-                language: movieData.Language || 'N/A',
-                country: movieData.Country || 'N/A',
-                awards: movieData.Awards || 'N/A',
-                poster: movieData.Poster || 'N/A',
-                ratings: movieData.Ratings || [],
-                metascore: movieData.Metascore || 'N/A',
+                title: movieData.title,
+                year: movieData.year || 'N/A',
+                rated: movieData.rated || 'N/A',
+                released: movieData.released || 'N/A',
+                runtime: movieData.runtime || 'N/A',
+                genre: movieData.genre || 'N/A',
+                director: movieData.director || 'N/A',
+                writer: movieData.writer || 'N/A',
+                actors: movieData.actors || 'N/A',
+                plot: movieData.plot || 'N/A',
+                language: movieData.language || 'N/A',
+                country: movieData.country || 'N/A',
+                awards: movieData.awards || 'N/A',
+                poster: movieData.poster || 'N/A',
+                ratings: movieData.ratings || [],
+                metascore: movieData.metascore || 'N/A',
                 imdbRating: movieData.imdbRating || 'N/A',
                 imdbVotes: movieData.imdbVotes || 'N/A',
                 imdbID: movieData.imdbID || 'N/A',
                 type: movieType,
-                boxOffice: movieData.BoxOffice || 'N/A'
+                boxOffice: movieData.boxOffice || 'N/A'
             };
 
             console.log('Saving movie/series:', movieToSave);

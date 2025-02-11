@@ -27,8 +27,8 @@ DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/tangoflix
 PORT=4000
 OMDB_API_KEY=tu_api_key_aqui
 
-# Iniciar el servidor en modo desarrollo
-npm run dev
+# Iniciar el servidor en modo desarrollo (en el directorio /server)
+node index.js
 ```
 
 ### 2. Configurar el Frontend (Cliente)
@@ -39,7 +39,7 @@ cd Cliente
 # Instalar dependencias
 npm install
 
-# Iniciar el cliente en modo desarrollo
+# Iniciar el cliente en modo desarrollo (en el directorio /cliente)
 npm run dev
 ```
 

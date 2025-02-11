@@ -52,9 +52,6 @@ export function DrawerDialogDemo({ user, onUserUpdated }) {
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Las contraseñas no coinciden');
         }
-        if (formData.password.length < 6) {
-          throw new Error('La contraseña debe tener al menos 6 caracteres');
-        }
       }
 
       const response = await fetch(`http://localhost:4000/api/users/${user.id}`, {
