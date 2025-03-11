@@ -17,10 +17,21 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/components/ui/*": ["./src/components/ui/*"],  // Add specific UI path
+      "@/lib/*": ["./src/lib/*"],
+      "@/app/*": ["./src/app/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/navbar.jsx", "src/components/Sidebar.tsx", "src/app/register/page.jsx", "src/app/browse/movies/page.tsx", "src/app/browse/series/page.tsx", "src/lib/utils.js", "src/components/EditUser.jsx"],
+  "include": ["next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    ".next/types/**/*.ts",
+    "src/components/**/*" ],
   "exclude": ["node_modules"]
 }

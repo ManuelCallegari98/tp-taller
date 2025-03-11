@@ -86,7 +86,7 @@ export default function Dashboard() {
       <div className="flex-grow overflow-y-scroll w-full">
         <div className="grid grid-cols-1 m-2 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filteredUsers.map((user) => (
-            <UserCard key={user.id} user={user} onUserUpdated={handleUserUpdate} />
+            <UserCard key={user.id} user={user} onUserUpdated={() => handleUserUpdate(user)} />
           ))}
         </div>
       </div>

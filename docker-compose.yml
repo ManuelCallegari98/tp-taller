@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: tptaller
+      POSTGRES_PASSWORD: 12345678
+      POSTGRES_DB: tangoflix
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:  # Verifica que Postgres esté listo
+      test: ["CMD-SHELL", "pg_isready -U tptaller -d tangoflix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./Server
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://tptaller:12345678@postgres:5432/tangoflix
+      NODE_ENV: production
+      OMDB_API_KEY: 91ca3eb4
+    depends_on:
+      postgres:
+        condition: service_healthy  # Espera hasta que Postgres esté listo
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./Cliente
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:4000 # Comunica contenedores internamente
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
